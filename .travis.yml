@@ -1,17 +1,17 @@
 language: node_js
 node_js:
-- stable
+  - stable
 cache:
   directories:
-  - node_modules
-  - client/node_modules
+    - node_modules
+    - client/node_modules
 install:
-- npm install
+  - npm install
 script:
-- npm run build
+  - npm run build
 deploy:
   skip_cleanup: true
   provider: heroku
-  app: aischat
+  app: ais-chat
   api_key:
-    secure: s64Qbc05mWyWd3cH1GIGnpQE6vQz5RyRDuFL8E1LAoeyzSAFE5Flk18bkUh29uah2ujEGrdCzx5RhcvKO/+8DGtRooZFqiI9/2q7JMpnWfYU8LxxmeEPYNHF9DodLqnxK2CuXiqszJ8yXyoUgJPbu2d9ls5F/3hUCd0fc2QQqef+PRb0hQIeUpJQF5C8yesJF60WVb6/4s1/xy160HAref3wFhR7Ov07rsRH0Ow8g8FXVgdthjX0ucjU9I/EAlsQ/OY0ooe1Sx395ni9xs0GaDApM3hFzBtI4+o3HzwCMRwPN5jI8GJFrrUVUjIIJRSYYB6GUQhwwQ/OXuAwtUsqkBzaGcnOi0W6PfXzBWIXFIO6Hgt2RNotoe4zDMZbc7xTRi+7m6OwB6bhTiG1SnETWVDfUzIZQdCObmgY7OHISuy84pF26OG+Vpmh2Es/EBUjGsnnGUtmPFpy0/EN6C15oaAwhmT3qGDSkk74E/sOQVILY6BQMG10/6gEhHmLXmV+eUbzhacwcEV57SXpbWn+bsUnAboACNtUf+XTLzWIwU6cqk+JClFslNAidHJQpAPfE7MuHkE5I3eI8tgU4HWsW90h0UOxfl5ektjCZRszU23SsUWBRvynY7CmfUEyZd7kYqVOtyuuNfnmZkp/fSyQzgjlW6GPuK+7Knwwx93vpF0=
+    secure: cqto1ez3yZD7i2nUbGIxDvKmIX8IXDaGlRP5D4GVr2XY4CcJ6pFMJjb3ofs/PWoZTycQp2u1ovSl2qH7utWszmwSnMBWDwTpItAEWvqr8t+LbiGyq0IF2RA6WF/+NbFAoxC28cb4YCEROV0gR2HjixdgCcFCT83QAZNIPpK+ui+uqDqpDI33IcrkMdrbRK6rIEN4xzn4xUCDmX3jd05fGr1AuLwSt/aRTocMWJWPOsOiucfnkgtF559o/wRqfJC7ZHotLGFKCGtBhKgjVEAd9Egv9ELCbyJS3r/ooF05owvSrFq2HOazp8d4swYpodF/QRYUhX3TNdRIuB+iqbqpv8ULsrYuD81o31yZGBG9/qLn9tMKK3cHFFU8sZuEiKr74UHrNE23qzTvzLz0vnx9cOmgNnuoipD9UmvmTaBfj6LHbUXBUFHXNwCMymvrQcMJUjT4j59d8fqqXT1+dL5mWRs0CZ54YlO8GOoq2rx4yF7b+TaHcpIKulGiQvyQhOo8pVfrsLoOMAdAtHIKYFmdQdMcmzxZXwquWDCdySdOvuwoqRt+2f46MS2ex4gBHGpbBQZIaTYlvEUqqMxY7rZoaDtu2MqypvwIcojtp/9QYeUsno7cBwnpPydKjqr3Et2ofp9bOchmvEZnhaxv0UhGu16RXa67JHfP7NcESkOmvws=
