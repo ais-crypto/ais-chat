@@ -8,7 +8,7 @@ cache:
 install:
 - npm install
 script:
-- npm run travis
+- npm run build
 deploy:
   skip_cleanup: true
   provider: heroku
