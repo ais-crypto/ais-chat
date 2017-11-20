@@ -7,10 +7,8 @@ cache:
   - client/node_modules
 install:
 - npm install
-- cd client && npm install
 script:
-- npm test
-- npm run build
+- npm run travis
 deploy:
   skip_cleanup: true
   provider: heroku

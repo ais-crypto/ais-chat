@@ -8,11 +8,11 @@
     "express": "4.13.3"
   },
   "scripts": {
+    "postinstall": "cd client && npm install",
     "start": "babel-node server.js",
     "watch": "babel-watch server.js",
     "dev": "concurrently \"npm run watch\" \"cd client && npm start\"",
-    "test": "cd client && npm test",
-    "build": "cd client && npm test",
+    "build": "cd client && npm test && npm run build",
     "lint": "eslint ."
   },
   "devDependencies": {
