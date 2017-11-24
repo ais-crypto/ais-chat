@@ -3,21 +3,21 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "babel-cli": "6.14.0",
-    "babel-core": "6.14.0",
     "express": "4.13.3",
     "socket.io": "^2.0.4"
   },
   "scripts": {
     "postinstall": "cd client && npm install",
-    "start": "babel-node server.js",
-    "watch": "babel-watch server.js",
+    "start": "node build/index.js",
+    "watch": "babel-watch server/index.js",
     "dev": "concurrently \"npm run watch\" \"cd client && npm start\"",
-    "build": "cd client && npm test && npm run build",
+    "build":
+      "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
     "lint": "eslint ."
   },
   "devDependencies": {
-    "babel-watch": "^2.0.6",
+    "babel-cli": "^6.14.0",
+    "babel-preset-env": "^1.6.1",
     "concurrently": "3.1.0",
     "eslint": "3.15.0",
     "eslint-config-airbnb": "14.1.0",
