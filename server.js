@@ -14,5 +14,7 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use('/api', apiRouter);
 
-
 app.listen(app.get('port'));
+server.listen(process.env.PORT || 3002);
+
+console.log(`listening on ${app.get('port')}`);
