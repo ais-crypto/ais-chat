@@ -4,8 +4,7 @@
   "private": true,
   "dependencies": {
     "express": "4.13.3",
-    "socket.io": "^2.0.4",
-    "@okta/okta-react": "0.0.7"
+    "socket.io": "^2.0.4"
   },
   "scripts": {
     "postinstall": "cd client && npm install",
