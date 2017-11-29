@@ -6,7 +6,7 @@ class Chat extends Component {
   constructor() {
     super();
 
-    this.socket = io.connect('/');
+    this.socket = io.connect();
     this.socket.on('connect', () => { console.log('socket.io connected'); });
     this.socket.on('disconnect', () => { console.log('socket.io disconnected'); });
     this.socket.on('reconnect', () => { console.log('socket.io reconnected'); });

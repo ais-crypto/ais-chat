@@ -23,9 +23,7 @@ app.get('*', (request, response) => {
   response.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-app.listen(app.get('port'));
-
-server.listen(process.env.PORT || 3002);
+server.listen(app.get('port'));
 
 console.log(`Listening on: ${app.get('port')}`);
 
