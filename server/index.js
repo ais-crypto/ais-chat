@@ -24,3 +24,14 @@ app.get('*', (request, response) => {
 });
 
 app.listen(app.get('port'));
+
+server.listen(process.env.PORT || 3002);
+
+console.log(`Listening on: ${app.get('port')}`);
+
+io.on('connection', (socket) => {
+  console.log(`a user connected`);
+  socket.on('disconnect', () => {
+    console.log(`a user has disconnected`)
+  });
+});
