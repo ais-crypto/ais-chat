@@ -15,12 +15,39 @@ class Chat extends Component {
     this.state = {
       messageList: [],
     };
+  }
 
+  onMessageWasSent(message) {
+    this.setState({
+      messageList: [...this.state.messageList, message],
+    });
+  }
+
+  sendMessage(text) {
+    if (text.length > 0) {
+      this.setState({
+        messageList: [...this.state.messageList, {
+          author: 'them',
+          type: 'text',
+          data: { text }
+        }]
+      })
+    }
   }
 
   render() {
     console.log(this.props);
-    return <div />;
+    return (
+      <div>
+        <Launcher
+          agentProfile={{
+            teamName: this.props.match.params.chatname
+          }}
+          onMessageWasSent={this.onMessageWasSent.bind(this)}
+          messageList={this.state.messageList}
+        />
+      </div>
+    );
   }
 }
 
