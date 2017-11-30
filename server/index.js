@@ -23,6 +23,9 @@ app.use(passport.session());
 
 // Expose auth routes first
 app.use('/auth', auth);
+app.get('/login', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
+});
 
 // Protect the rest of the app
 app.use(auth.isLoggedIn);
@@ -31,8 +34,8 @@ app.use(auth.isLoggedIn);
 app.use('/api', router);
 
 // All remaining requests return the React app, so it can handle routing
-app.get('*', (request, response) => {
-  response.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
 server.listen(app.get('port'));
