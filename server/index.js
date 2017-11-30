@@ -12,13 +12,15 @@ const io = new socketio(server);
 
 app.set('port', process.env.PORT || 3001);
 
-// Auth middleware
+// Expose auth routes first
 app.use(passport.initialize());
-app.use(passport.session());
+app.use('/auth', auth);
+
+// Protect the rest of the app
+app.use(auth.isLoggedIn);
 
 // API Routing is handled externally
 app.use('/api', router);
-app.use('/auth', auth);
 
 // All remaining requests return the React app, so it can handle routing
 app.get('*', (request, response) => {
