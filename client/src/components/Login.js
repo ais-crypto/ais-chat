@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Link } from 'react-router-dom';
 
 const authOrigin =
   process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3001';
