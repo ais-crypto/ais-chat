@@ -20,7 +20,6 @@ passport.use(
       callbackURL: callbackOrigin + '/auth/google/callback'
     },
     function(accessToken, refreshToken, profile, done) {
-      console.log(profile);
       return done(null, true);
     }
   )
@@ -33,8 +32,7 @@ router.get('/google', passport.authenticate('google', { scope: 'profile' }));
 router.get(
   '/google/callback',
   passport.authenticate('google', {
-    failureRedirect: redirectOrigin + '/login',
-    session: false
+    failureRedirect: redirectOrigin + '/login'
   }),
   function(req, res) {
     res.redirect(redirectOrigin);
