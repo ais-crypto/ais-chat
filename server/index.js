@@ -3,6 +3,7 @@ import path from 'path';
 import http from 'http';
 import socketio from 'socket.io';
 import router from './router';
+import auth form './auth'
 
 const app = express();
 const server = http.createServer(app);
@@ -12,6 +13,8 @@ app.set('port', process.env.PORT || 3001);
 
 // API Routing is handled externally
 app.use('/api', router);
+
+app.use('/auth', auth);
 
 // Express only serves static assets in production
 if (process.env.NODE_ENV === 'production') {
