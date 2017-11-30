@@ -6,4 +6,4 @@ router.get('/', (req, res) => {
   res.json({ message: 'Welcome to the AIS chat API!'});
 });
 
-export default router; 
+export default router;
