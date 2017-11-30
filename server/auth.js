@@ -42,7 +42,7 @@ router.get(
 // Middleware for authentication checks
 router.isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) return next();
-  res.redirect(redirectOrigin + '/login');
+  res.redirect(callbackOrigin + '/login');
 };
 
 export default router;
