@@ -23,4 +23,13 @@ app.get('*', (request, response) => {
   response.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-app.listen(app.get('port'));
+server.listen(app.get('port'));
+
+console.log(`Listening on: ${app.get('port')}`);
+
+io.on('connection', (socket) => {
+  console.log(`a user connected`);
+  socket.on('disconnect', () => {
+    console.log(`a user has disconnected`)
+  });
+});
