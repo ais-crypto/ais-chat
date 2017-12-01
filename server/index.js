@@ -7,13 +7,18 @@ import passport from 'passport';
 import socketio from 'socket.io';
 import router from './router';
 import auth from './auth';
+import SQLiteStore from 'connect-sqlite3';
+import passportSocketIo from 'passport.socketio';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const server = http.createServer(app);
 const io = new socketio(server);
+const store = SQLiteStore(session);
 const sess = {
+  store: new store(),
   secret: process.env.SESSION_SECRET,
-  resave: false,
+  resave: true,
   saveUninitialized: true
 };
 
@@ -29,6 +34,7 @@ if (app.get('env') === 'production') {
 
 // Initial app setup
 app.set('port', process.env.PORT || 3001);
+app.use(cookieParser(sess.secret));
 app.use(session(sess));
 app.use(bodyParser.urlencoded({ extended: false }));
 
