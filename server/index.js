@@ -19,7 +19,8 @@ const sess = {
   store: new store(),
   secret: process.env.SESSION_SECRET,
   resave: true,
-  saveUninitialized: true
+  saveUninitialized: true,
+  cookie: {}
 };
 
 const serializer = function(user, done) {
