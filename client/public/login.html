@@ -6,14 +6,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="theme-color" content="#000000">
   <script src="https://use.fontawesome.com/d069c5c84f.js"></script>
-  <title>React App</title>
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+  <title>AIS Chat</title>
+  <style>
+    html,
+    body {
+      background-color: rgb(176, 209, 247);
+      height: 100%;
+    }
+
+    .login-container {
+      text-align: center;
+      position: relative;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .login-button {
+      display: block;
+      margin: auto;
+      width: 200px;
+      height: 30px;
+      line-height: 30px;
+
+      border-style: solid;
+      border-width: 1px;
+      border-radius: 20px;
+
+      text-align: center;
+      font-size: 18px;
+      color: black;
+      text-decoration: none;
+    }
+
+    #google {
+      font-family: 'Roboto';
+    }
+  </style>
 </head>
 
 <body>
-  <a href='/auth/google'>
-    <i class="fa fa-google" aria-hidden="true"></i>
-    Sign in with Google
-  </a>
+  <div class="login-container">
+    <a href='/auth/google' class="login-button" id="google">
+      <div>
+        <i class="fa fa-google" aria-hidden="true"></i>
+        Sign in with Google
+      </div>
+    </a>
+  </div>
 </body>
 
 </html>
