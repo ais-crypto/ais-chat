@@ -20,7 +20,7 @@ passport.use(
       callbackURL: callbackOrigin + '/auth/google/callback'
     },
     function(accessToken, refreshToken, profile, done) {
-      return done(null, true);
+      return done(null, profile);
     }
   )
 );

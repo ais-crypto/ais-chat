@@ -1,4 +1,6 @@
 import express from 'express';
+import session from 'express-session';
+import bodyParser from 'body-parser';
 import path from 'path';
 import http from 'http';
 import passport from 'passport';
@@ -14,6 +16,16 @@ const serializer = function(user, done) {
 };
 
 app.set('port', process.env.PORT || 3001);
+app.set('trust proxy', 1); // trust first proxy
+app.use(
+  session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }
+  })
+);
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // Passport setup
 passport.serializeUser(serializer);
@@ -34,6 +46,7 @@ app.use(auth.isLoggedIn);
 app.use('/api', router);
 
 // All remaining requests return the React app, so it can handle routing
+app.use(express.static(path.resolve(__dirname, '../client/build')));
 app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
