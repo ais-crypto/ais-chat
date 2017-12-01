@@ -16,7 +16,15 @@ const serializer = function(user, done) {
 };
 
 app.set('port', process.env.PORT || 3001);
-app.use(session({ secret: 'cats' }));
+app.set('trust proxy', 1); // trust first proxy
+app.use(
+  session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }
+  })
+);
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // Passport setup
