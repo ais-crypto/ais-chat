@@ -1,4 +1,6 @@
 import express from 'express';
+import session from 'express-session';
+import bodyParser from 'body-parser';
 import path from 'path';
 import http from 'http';
 import passport from 'passport';
@@ -14,6 +16,8 @@ const serializer = function(user, done) {
 };
 
 app.set('port', process.env.PORT || 3001);
+app.use(session({ secret: 'cats' }));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // Passport setup
 passport.serializeUser(serializer);
