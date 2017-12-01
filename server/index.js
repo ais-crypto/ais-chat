@@ -62,9 +62,24 @@ app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-server.listen(app.get('port'));
-
-console.log(`Listening on: ${app.get('port')}`);
+// socket.io security layer
+io.use(
+  passportSocketIo.authorize({
+    passport: passport,
+    key: 'connect.sid',
+    secret: sess.secret,
+    store: sess.store,
+    cookieParser: cookieParser,
+    success: (data, accept) => {
+      console.log('successful authentication');
+      accept();
+    },
+    fail: (data, message, error, accept) => {
+      console.log('failed authentication:', message);
+      accept(new Error(`authentication error: ${message}`));
+    }
+  })
+);
 
 io.on('connection', socket => {
   console.log(`a user connected`);
@@ -72,3 +87,7 @@ io.on('connection', socket => {
     console.log(`a user has disconnected`);
   });
 });
+
+server.listen(app.get('port'));
+
+console.log(`Listening on: ${app.get('port')}`);
