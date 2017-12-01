@@ -7,24 +7,35 @@ import passport from 'passport';
 import socketio from 'socket.io';
 import router from './router';
 import auth from './auth';
+import SQLiteStore from 'connect-sqlite3';
+import passportSocketIo from 'passport.socketio';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const server = http.createServer(app);
 const io = new socketio(server);
+const store = SQLiteStore(session);
+const sess = {
+  store: new store(),
+  secret: process.env.SESSION_SECRET,
+  resave: true,
+  saveUninitialized: true
+};
+
 const serializer = function(user, done) {
   done(null, user);
 };
 
+// Use secure cookies only on production
+if (app.get('env') === 'production') {
+  app.set('trust proxy', 1);
+  sess.cookie.secure = true;
+}
+
+// Initial app setup
 app.set('port', process.env.PORT || 3001);
-app.set('trust proxy', 1); // trust first proxy
-app.use(
-  session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: true }
-  })
-);
+app.use(cookieParser(sess.secret));
+app.use(session(sess));
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // Passport setup
@@ -51,9 +62,24 @@ app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-server.listen(app.get('port'));
-
-console.log(`Listening on: ${app.get('port')}`);
+// socket.io security layer
+io.use(
+  passportSocketIo.authorize({
+    passport: passport,
+    key: 'connect.sid',
+    secret: sess.secret,
+    store: sess.store,
+    cookieParser: cookieParser,
+    success: (data, accept) => {
+      console.log('successful authentication');
+      accept();
+    },
+    fail: (data, message, error, accept) => {
+      console.log('failed authentication:', message);
+      accept(new Error(`authentication error: ${message}`));
+    }
+  })
+);
 
 io.on('connection', socket => {
   console.log(`a user connected`);
@@ -61,3 +87,7 @@ io.on('connection', socket => {
     console.log(`a user has disconnected`);
   });
 });
+
+server.listen(app.get('port'));
+
+console.log(`Listening on: ${app.get('port')}`);
