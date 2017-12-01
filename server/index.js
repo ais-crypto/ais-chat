@@ -11,20 +11,25 @@ import auth from './auth';
 const app = express();
 const server = http.createServer(app);
 const io = new socketio(server);
+const sess = {
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true
+};
+
 const serializer = function(user, done) {
   done(null, user);
 };
 
+// Use secure cookies only on production
+if (app.get('env') === 'production') {
+  app.set('trust proxy', 1);
+  sess.cookie.secure = true;
+}
+
+// Initial app setup
 app.set('port', process.env.PORT || 3001);
-app.set('trust proxy', 1); // trust first proxy
-app.use(
-  session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: true }
-  })
-);
+app.use(session(sess));
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // Passport setup
