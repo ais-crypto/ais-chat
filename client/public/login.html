@@ -6,12 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="theme-color" content="#000000">
   <script src="https://use.fontawesome.com/d069c5c84f.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
   <title>AIS Chat</title>
   <style>
     html,
     body {
-      background-color: rgb(176, 209, 247);
+      background-color: rgb(48, 48, 48);
       height: 100%;
     }
 
@@ -22,23 +24,6 @@
       transform: translateY(-50%);
     }
 
-    .login-button {
-      display: block;
-      margin: auto;
-      width: 200px;
-      height: 30px;
-      line-height: 30px;
-
-      border-style: solid;
-      border-width: 1px;
-      border-radius: 20px;
-
-      text-align: center;
-      font-size: 18px;
-      color: black;
-      text-decoration: none;
-    }
-
     #google {
       font-family: 'Roboto';
     }
@@ -47,11 +32,9 @@
 
 <body>
   <div class="login-container">
-    <a href='/auth/google' class="login-button" id="google">
-      <div>
-        <i class="fa fa-google" aria-hidden="true"></i>
-        Sign in with Google
-      </div>
+    <a href='/auth/google' class="waves-effect waves-light btn login">
+      <i class="fa fa-google left" aria-hidden="true"></i>
+      Sign in with Google
     </a>
   </div>
 </body>
