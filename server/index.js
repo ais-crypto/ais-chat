@@ -83,9 +83,20 @@ io.use(
 );
 
 io.on('connection', socket => {
-  console.log(`a user connected`);
+  console.log(`${socket.request.user.displayName} has connected`);
+
+  socket.on('room', (room) => {
+    socket.join(room);
+    console.log(`${socket.request.user.displayName} has joined room ${room}`);
+  });
+
+  socket.on('message', (message) => {
+    console.log(`message received`);
+    io.to(message.room).emit('message', message.body);
+  });
+
   socket.on('disconnect', () => {
-    console.log(`a user has disconnected`);
+    console.log(`${socket.request.user.displayName} has disconnected`);
   });
 });
 
