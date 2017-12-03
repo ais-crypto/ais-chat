@@ -9,7 +9,9 @@ import Chat from './components/Chat';
 class App extends Component {
   render() {
     return (
-      <div style={{ backgroundColor: 'rgb(48,48,48)' }}>
+      <div
+        style={{ backgroundColor: 'rgb(48,48,48)', height: window.innerHeight }}
+      >
         <MuiThemeProvider muiTheme={getMuiTheme(darkBaseTheme)}>
           <Router>
             <Switch>
