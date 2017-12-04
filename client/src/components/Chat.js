@@ -2,17 +2,12 @@ import React, { Component } from 'react';
 import { ChatFeed, Message } from 'react-chat-ui';
 import { Card, TextField } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
+import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
-import * as crypto from '../chat-crypto';
 
-const users = {
-  0: 'You',
-  1: 'Mark',
-  2: 'Evan'
-};
-
+// TODO: migrate into component?
 const customBubble = props => (
   <div>
     <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
@@ -25,21 +20,74 @@ class Chat extends Component {
   constructor() {
     super();
 
+    this.state = {
+      text: '',
+      messages: [],
+      useCustomBubble: false,
+      users: Immutable.Map()
+    };
+
     this.socket = io.connect();
     this.socket.on('connect', () => {
       console.log('socket.io connected');
-      this.socket.emit('request_identity', 'USER PUBLIC SIGNATURE KEY HERE');
+
+      // TODO: insert signature pair object
+      this.socket.emit(
+        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+      );
+
+      this.socket.on('identity', signed_identity => {
+        console.log('Identity received:');
+        console.log(signed_identity);
+
+        // TODO: verify identity
+
+        // TODO: put into if-statement (when server identity is verified)
+        this.setState({
+          curr_user_identity: signed_identity,
+          curr_user: signed_identity.id,
+          users: this.state.users.set(signed_identity.id, signed_identity)
+        });
+
+      });
+
       this.socket.emit('room', this.props.match.params.chatname);
+
+      // TODO: emit identity with public key (w/out signature? extra state object?)
+      this.socket.emit('new_hello', this.state.curr_user_identity);
+      this.socket.on('hello', identity => {
+        this.setState({
+          users: this.state.users.set(identity.id, identity)
+        });
+      });
+
+      // TODO: generate new group key (in chat-crypto) & communicate to everyone in pairs
+
+      // TODO: prevent generating multiple group keys
+      // stop key generation if received new member hello message?
     });
 
-    this.socket.on('identity', msg => {
-      console.log(msg);
+    this.socket.on('new_hello', identity => {
+      this.socket.emit('hello', this.state.curr_user_identity);
+
+      this.setState({
+        users: this.state.users.set(identity.id, identity)
+      });
     });
 
     this.socket.on('message', msg => {
-      console.log('new message received');
+      console.log('New message received:');
       console.log(msg);
-      this.pushMessage(2, msg.text); // Change to correct user id
+
+      // TODO: decrypt message
+
+      // TODO: verify signature of message (only push if verified)
+
+      this.pushMessage(msg.sender, msg.text); // TODO: Change to correct user id
+
+      console.log(`curr_user: ${this.state.curr_user}`);
+      console.log(`sender: ${msg.sender}`);
+
     });
 
     this.socket.on('disconnect', () => {
@@ -49,26 +97,9 @@ class Chat extends Component {
       console.log('socket.io reconnected');
     });
     this.socket.on('error', error => {
-      console.log(error);
+      console.error(error);
     });
 
-    this.state = {
-      text: '',
-      messages: [
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({
-          id: 2,
-          message: 'Hey! Evan here. react-chat-ui is pretty dooope.',
-          senderName: 'Evan'
-        }),
-        new Message({ id: 0, message: 'Chocolate!', senderName: 'Simon' }),
-        new Message({ id: 0, message: 'Ice cream!', senderName: 'Simon' })
-      ],
-      useCustomBubble: false,
-      curr_user: 0
-    };
   }
 
   onMessageSubmit(e) {
@@ -77,12 +108,11 @@ class Chat extends Component {
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       body: {
-        sender: '', // access cookie for userID or display name
-        signature: '',
+        sender: this.state.curr_user,
+        signature: 'SIGNATURE HERE',
         text: this.state.text
       }
     });
-    this.pushMessage(this.state.curr_user, this.state.text);
     this.setState({ text: '' });
     return true;
   }
@@ -91,15 +121,15 @@ class Chat extends Component {
     const newMessage = new Message({
       id: sender,
       message,
-      senderName: users[sender]
+      senderName: this.state.users.get(sender).displayName
     });
+    if (sender === this.state.curr_user) {
+      newMessage.id = 0;
+    }
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
   render() {
-    // TODO: DEBUG STATEMENT FOR CRYPTO SCRIPTS
-    console.log(`key pair generated: ${crypto.generateUserKeyPair()}`);
-    
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>
