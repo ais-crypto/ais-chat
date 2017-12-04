@@ -6,7 +6,6 @@ import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
-
 // TODO: migrate into component?
 const customBubble = props => (
   <div>
@@ -33,45 +32,45 @@ class Chat extends Component {
 
       // TODO: insert signature pair object
       this.socket.emit(
-        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+        'request_identity',
+        'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
       );
 
-      this.socket.on('identity', signed_identity => {
-        console.log('Identity received:');
-        console.log(signed_identity);
-
-        // TODO: verify identity
-
-        // TODO: put into if-statement (when server identity is verified)
-        this.setState({
-          curr_user_identity: signed_identity,
-          curr_user: signed_identity.id,
-          users: this.state.users.set(signed_identity.id, signed_identity)
-        });
-
-      });
-
-      this.socket.emit('room', this.props.match.params.chatname);
-
       // TODO: emit identity with public key (w/out signature? extra state object?)
-      this.socket.emit('new_hello', this.state.curr_user_identity);
-      this.socket.on('hello', identity => {
-        this.setState({
-          users: this.state.users.set(identity.id, identity)
-        });
-      });
-
-      // TODO: generate new group key (in chat-crypto) & communicate to everyone in pairs
 
       // TODO: prevent generating multiple group keys
       // stop key generation if received new member hello message?
     });
 
-    this.socket.on('new_hello', identity => {
-      this.socket.emit('hello', this.state.curr_user_identity);
+    this.socket.on('identity', signed_identity => {
+      console.log('Identity received:');
+      console.log(signed_identity);
 
+      // TODO: verify identity
+      // TODO: put into if-statement (when server identity is verified)
+      this.setState({ curr_user: signed_identity });
+
+      this.socket.emit('hello', {
+        room: this.props.match.params.chatname,
+        user: this.state.curr_user
+      });
+    });
+
+    this.socket.on('hello', user => {
+      console.log(`User joined room: ${user.identity.id}`);
       this.setState({
-        users: this.state.users.set(identity.id, identity)
+        users: this.state.users.set(user.identity.id, user.identity)
+      });
+      this.socket.emit('welcome', {
+        user: user.socket,
+        identity: this.state.curr_user
+      });
+    });
+
+    this.socket.on('welcome', user => {
+      console.log(`Received welcome from: ${user.id}`);
+      this.setState({
+        users: this.state.users.set(user.id, user)
       });
     });
 
@@ -83,11 +82,10 @@ class Chat extends Component {
 
       // TODO: verify signature of message (only push if verified)
 
-      this.pushMessage(msg.sender, msg.text); // TODO: Change to correct user id
+      this.pushMessage(msg.sender, msg.text);
 
-      console.log(`curr_user: ${this.state.curr_user}`);
+      console.log(`curr_user: ${this.state.curr_user.id}`);
       console.log(`sender: ${msg.sender}`);
-
     });
 
     this.socket.on('disconnect', () => {
@@ -99,7 +97,6 @@ class Chat extends Component {
     this.socket.on('error', error => {
       console.error(error);
     });
-
   }
 
   onMessageSubmit(e) {
@@ -108,7 +105,7 @@ class Chat extends Component {
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       body: {
-        sender: this.state.curr_user,
+        sender: this.state.curr_user.id,
         signature: 'SIGNATURE HERE',
         text: this.state.text
       }
@@ -118,14 +115,14 @@ class Chat extends Component {
   }
 
   pushMessage(sender, message) {
+    const isOwnMessage = sender === this.state.curr_user.id;
     const newMessage = new Message({
-      id: sender,
+      id: isOwnMessage ? 0 : sender,
       message,
-      senderName: this.state.users.get(sender).displayName
+      senderName: isOwnMessage
+        ? this.state.curr_user.displayName
+        : this.state.users.get(sender).displayName
     });
-    if (sender === this.state.curr_user) {
-      newMessage.id = 0;
-    }
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 

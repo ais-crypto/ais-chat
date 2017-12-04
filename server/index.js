@@ -93,18 +93,29 @@ io.on('connection', socket => {
 
     const signed_identity = Object.assign(identity, { server_signature });
 
-    console.log(`${socket.request.user.displayName}'s signed identity:`);
-    console.log(signed_identity);
+    console.log(
+      `Sending ${socket.request.user.displayName}'s signed identity.`
+    );
 
     socket.emit('identity', signed_identity);
   });
 
-  socket.on('room', room => {
-    socket.join(room);
-    console.log(`${socket.request.user.displayName} has joined room ${room}`);
+  socket.on('hello', message => {
+    socket.join(message.room);
+
+    console.log(`${message.user.displayName} has joined room  ${message.room}`);
+
+    socket.broadcast
+      .to(message.room)
+      .emit('hello', { socket: socket.id, identity: message.user });
   });
 
-  // TODO: new_hello and hello messages
+  socket.on('welcome', message => {
+    const room_users = io.sockets.adapter.rooms[message.room];
+    socket.broadcast
+      .to(message.user)
+      .emit('welcome', { room_users, identity: message.identity });
+  });
 
   socket.on('message', message => {
     console.log(`Message received from ${socket.request.user.displayName}:`);
