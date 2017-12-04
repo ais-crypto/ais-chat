@@ -52,7 +52,7 @@ class Chat extends Component {
 
       this.socket.emit('hello', {
         room: this.props.match.params.chatname,
-        user: this.state.curr_user
+        identity: this.state.curr_user
       });
     });
 
@@ -62,16 +62,20 @@ class Chat extends Component {
         users: this.state.users.set(user.identity.id, user.identity)
       });
       this.socket.emit('welcome', {
-        user: user.socket,
+        room: this.props.match.params.chatname,
+        to_socket: user.socket,
         identity: this.state.curr_user
       });
     });
 
-    this.socket.on('welcome', user => {
-      console.log(`Received welcome from: ${user.id}`);
+    this.socket.on('welcome', msg => {
+      console.log(`Received welcome from: ${msg.identity.id}`);
       this.setState({
-        users: this.state.users.set(user.id, user)
+        users: this.state.users.set(msg.identity.id, msg.identity)
       });
+      if (this.state.users.size === msg.room_size - 1) {
+        console.log('Received welcome from all participants');
+      }
     });
 
     this.socket.on('message', msg => {

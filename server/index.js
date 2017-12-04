@@ -103,18 +103,21 @@ io.on('connection', socket => {
   socket.on('hello', message => {
     socket.join(message.room);
 
-    console.log(`${message.user.displayName} has joined room  ${message.room}`);
+    console.log(
+      `${message.identity.displayName} has joined room  ${message.room}`
+    );
 
     socket.broadcast
       .to(message.room)
-      .emit('hello', { socket: socket.id, identity: message.user });
+      .emit('hello', { socket: socket.id, identity: message.identity });
   });
 
   socket.on('welcome', message => {
     const room_users = io.sockets.adapter.rooms[message.room];
-    socket.broadcast
-      .to(message.user)
-      .emit('welcome', { room_users, identity: message.identity });
+    socket.broadcast.to(message.to_socket).emit('welcome', {
+      room_size: room_users.length,
+      identity: message.identity
+    });
   });
 
   socket.on('message', message => {
