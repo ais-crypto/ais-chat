@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { ChatFeed, Message } from 'react-chat-ui';
 import { Card, TextField } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
+import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
@@ -27,51 +28,6 @@ class Chat extends Component {
   constructor() {
     super();
 
-    this.socket = io.connect();
-    this.socket.on('connect', () => {
-      console.log('socket.io connected');
-
-      // TODO: insert signature pair object
-      this.socket.emit(
-        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
-      );
-
-      this.socket.on('identity', signed_identity => {
-        // TODO: verify identity
-        // TODO: store self identity to state
-
-        console.log(signed_identity);
-      });
-
-      this.socket.emit('room', this.props.match.params.chatname);
-
-      // TODO: emit new member hello message,
-      // receive key information from everyone & store
-      // generate new group key (in chat-crypto) & communicate to everyone in pairs
-
-      // TODO: prevent generating multiple group keys
-      // stop key generation if received new member hello message?
-    });
-
-    this.socket.on('message', msg => {
-
-      // TODO: TO PROCEED understand chat logic
-      console.log('new message received');
-      console.log(msg);
-      this.pushMessage(2, msg.text); // TODO: Change to correct user id
-
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('socket.io disconnected');
-    });
-    this.socket.on('reconnect', () => {
-      console.log('socket.io reconnected');
-    });
-    this.socket.on('error', error => {
-      console.error(error);
-    });
-
     this.state = {
       text: '',
       messages: [
@@ -87,8 +43,69 @@ class Chat extends Component {
         new Message({ id: 0, message: 'Ice cream!', senderName: 'Simon' })
       ],
       useCustomBubble: false,
-      curr_user: 0
+      curr_user: 0,
+      users: Immutable.Map(),
     };
+
+    this.socket = io.connect();
+    this.socket.on('connect', () => {
+      console.log('socket.io connected');
+
+      // TODO: insert signature pair object
+      this.socket.emit(
+        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+      );
+
+      this.socket.on('identity', signed_identity => {
+        // TODO: verify identity
+
+        // TODO: put into if-statement (when server identity is verified)
+        this.setState({
+          curr_user_identity: signed_identity,
+          curr_user: signed_identity.user.id,
+        });
+
+        console.log(signed_identity);
+      });
+
+      this.socket.emit('room', this.props.match.params.chatname);
+
+      // TODO: emit identity with public key (w/out signature? extra state object?)
+      this.socket.emit('new-hello', this.state.curr_user_identity);
+      // receive key information from everyone & store
+      // generate new group key (in chat-crypto) & communicate to everyone in pairs
+
+      // TODO: prevent generating multiple group keys
+      // stop key generation if received new member hello message?
+    });
+
+    this.socket.on('new-hello', identity => {
+      // TODO: figure out identity object & keys needed
+      // add user to list of users
+      this.setState({
+        users: this.state.users.set(identity.user.id, identity),
+      });
+    });
+
+    this.socket.on('message', msg => {
+
+      // TODO: TO PROCEED understand chat logic
+      console.log('New message received:');
+      console.log(msg);
+      this.pushMessage(2, msg.text); // TODO: Change to correct user id
+
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('socket.io disconnected');
+    });
+    this.socket.on('reconnect', () => {
+      console.log('socket.io reconnected');
+    });
+    this.socket.on('error', error => {
+      console.error(error);
+    });
+
   }
 
   onMessageSubmit(e) {
