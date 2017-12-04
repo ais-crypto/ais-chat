@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import { ChatFeed, Message } from 'react-chat-ui';
+import { Card, TextField } from 'material-ui';
+import { Row, Col } from 'react-flexbox-grid';
+
 import io from 'socket.io-client';
 
 const users = {
@@ -43,6 +46,7 @@ class Chat extends Component {
     });
 
     this.state = {
+      text: '',
       messages: [
         new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
         new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
@@ -61,20 +65,18 @@ class Chat extends Component {
   }
 
   onMessageSubmit(e) {
-    const message = this.input.value;
     e.preventDefault();
-    if (!message) return false;
-    console.log(message);
+    if (!this.state.text) return false;
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       body: {
         sender: '', // access cookie for userID or display name
         signature: '',
-        text: message
+        text: this.state.text
       }
     });
-    this.pushMessage(this.state.curr_user, message);
-    this.input.value = '';
+    this.pushMessage(this.state.curr_user, this.state.text);
+    this.setState({ text: '' });
     return true;
   }
 
@@ -88,28 +90,32 @@ class Chat extends Component {
   }
 
   render() {
-    console.log(this.props);
     return (
-      <div className="container">
-        <div className="chatfeed-wrapper">
-          <ChatFeed
-            chatBubble={this.state.useCustomBubble && customBubble}
-            maxHeight={500}
-            messages={this.state.messages} // Boolean: list of message objects
-            showSenderName
-          />
+      <Row middle="xs" style={{ height: window.innerHeight }}>
+        <Col xs={8} xsOffset={2}>
+          <Card className="container">
+            <div className="chatfeed-wrapper">
+              <ChatFeed
+                chatBubble={this.state.useCustomBubble && customBubble}
+                maxHeight={500}
+                messages={this.state.messages} // Boolean: list of message objects
+                showSenderName
+              />
 
-          <form onSubmit={e => this.onMessageSubmit(e)}>
-            <input
-              ref={i => {
-                this.input = i;
-              }}
-              placeholder="Type a message..."
-              className="message-input"
-            />
-          </form>
-        </div>
-      </div>
+              <form onSubmit={e => this.onMessageSubmit(e)}>
+                <TextField
+                  value={this.state.text}
+                  onChange={e => {
+                    this.setState({ text: e.target.value });
+                  }}
+                  hintText="Type a message..."
+                  fullWidth={true}
+                />
+              </form>
+            </div>
+          </Card>
+        </Col>
+      </Row>
     );
   }
 }
