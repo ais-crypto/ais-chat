@@ -57,21 +57,26 @@ class Chat extends Component {
       );
 
       this.socket.on('identity', signed_identity => {
+        console.log('Identity received:');
+        console.log(signed_identity);
+
         // TODO: verify identity
 
         // TODO: put into if-statement (when server identity is verified)
         this.setState({
           curr_user_identity: signed_identity,
           curr_user: signed_identity.id,
+          users: this.state.users.set(signed_identity.id, signed_identity),
         });
 
-        console.log(signed_identity);
+        console.log(this.state.curr_user);
+
       });
 
       this.socket.emit('room', this.props.match.params.chatname);
 
       // TODO: emit identity with public key (w/out signature? extra state object?)
-      this.socket.emit('new-hello', this.state.curr_user_identity);
+      this.socket.emit('new_hello', this.state.curr_user_identity);
       this.socket.on('hello', identity => {
         this.setState({
           users: this.state.users.set(identity.id, identity),
@@ -84,7 +89,7 @@ class Chat extends Component {
       // stop key generation if received new member hello message?
     });
 
-    this.socket.on('new-hello', identity => {
+    this.socket.on('new_hello', identity => {
       this.socket.emit('hello', this.state.curr_user_identity);
 
       this.setState({
@@ -135,15 +140,12 @@ class Chat extends Component {
     const newMessage = new Message({
       id: sender,
       message,
-      senderName: this.state.users[sender].displayName,
+      senderName: this.state.users.get(sender).displayName,
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
   render() {
-    // TODO: DEBUG STATEMENT FOR CRYPTO SCRIPTS
-    console.log(`key pair generated: ${crypto.generateUserKeyPair()}`);
-
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>

@@ -96,7 +96,7 @@ io.on('connection', socket => {
     console.log(`${socket.request.user.displayName}'s signed identity:`);
     console.log(signed_identity);
 
-    io.to(socket.id).emit('identity', signed_identity);
+    socket.emit('identity', signed_identity);
   });
 
   socket.on('room', room => {
@@ -104,9 +104,12 @@ io.on('connection', socket => {
     console.log(`${socket.request.user.displayName} has joined room ${room}`);
   });
 
+  // TODO: new_hello and hello messages
+
   socket.on('message', message => {
-    console.log(`message received`);
-    socket.to(message.room).emit('message', message.body);
+    console.log(`Message received from ${socket.request.user.displayName}:`);
+    console.log(message);
+    io.to(message.room).emit('message', message.body);
   });
 
   socket.on('disconnect', () => {
