@@ -24,6 +24,7 @@
           "DebuggerStatement"
         ],
         "no-debugger": "warn",
-        "camelcase": [0, {properties: "never"}]
+        "camelcase": [0, {properties: "never"}],
+        "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }]
     },
 }

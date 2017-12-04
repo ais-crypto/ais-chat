@@ -1,19 +1,11 @@
 import React, { Component } from 'react';
+import PropTypes from 'prop-types';
 import { ChatFeed, Message } from 'react-chat-ui';
 import { Card, TextField } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
 
 import io from 'socket.io-client';
-
-// TODO: migrate into component?
-const customBubble = props => (
-  <div>
-    <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
-      props.message.message
-    }`}</p>
-  </div>
-);
 
 class Chat extends Component {
   constructor() {
@@ -23,7 +15,7 @@ class Chat extends Component {
       text: '',
       messages: [],
       useCustomBubble: false,
-      users: Immutable.Map()
+      users: Immutable.Map(),
     };
 
     this.socket = io.connect();
@@ -33,7 +25,7 @@ class Chat extends Component {
       // TODO: insert signature pair object
       this.socket.emit(
         'request_identity',
-        'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+        'USER PUBLIC SIGNATURE KEY AS OBJECT HERE',
       );
 
       // TODO: emit identity with public key (w/out signature? extra state object?)
@@ -42,7 +34,7 @@ class Chat extends Component {
       // stop key generation if received new member hello message?
     });
 
-    this.socket.on('identity', signed_identity => {
+    this.socket.on('identity', (signed_identity) => {
       console.log('Identity received:');
       console.log(signed_identity);
 
@@ -52,33 +44,33 @@ class Chat extends Component {
 
       this.socket.emit('hello', {
         room: this.props.match.params.chatname,
-        identity: this.state.curr_user
+        identity: this.state.curr_user,
       });
     });
 
-    this.socket.on('hello', user => {
+    this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.id}`);
       this.setState({
-        users: this.state.users.set(user.identity.id, user.identity)
+        users: this.state.users.set(user.identity.id, user.identity),
       });
       this.socket.emit('welcome', {
         room: this.props.match.params.chatname,
         to_socket: user.socket,
-        identity: this.state.curr_user
+        identity: this.state.curr_user,
       });
     });
 
-    this.socket.on('welcome', msg => {
+    this.socket.on('welcome', (msg) => {
       console.log(`Received welcome from: ${msg.identity.id}`);
       this.setState({
-        users: this.state.users.set(msg.identity.id, msg.identity)
+        users: this.state.users.set(msg.identity.id, msg.identity),
       });
       if (this.state.users.size === msg.room_size - 1) {
         console.log('Received welcome from all participants');
       }
     });
 
-    this.socket.on('message', msg => {
+    this.socket.on('message', (msg) => {
       console.log('New message received:');
       console.log(msg);
 
@@ -98,7 +90,7 @@ class Chat extends Component {
     this.socket.on('reconnect', () => {
       console.log('socket.io reconnected');
     });
-    this.socket.on('error', error => {
+    this.socket.on('error', (error) => {
       console.error(error);
     });
   }
@@ -111,8 +103,8 @@ class Chat extends Component {
       body: {
         sender: this.state.curr_user.id,
         signature: 'SIGNATURE HERE',
-        text: this.state.text
-      }
+        text: this.state.text,
+      },
     });
     this.setState({ text: '' });
     return true;
@@ -125,12 +117,21 @@ class Chat extends Component {
       message,
       senderName: isOwnMessage
         ? this.state.curr_user.displayName
-        : this.state.users.get(sender).displayName
+        : this.state.users.get(sender).displayName,
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
   render() {
+    const customBubble = props => (
+      <div>
+        <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
+          props.message.message
+        }`}
+        </p>
+      </div>
+    );
+
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>
@@ -146,11 +147,11 @@ class Chat extends Component {
               <form onSubmit={e => this.onMessageSubmit(e)}>
                 <TextField
                   value={this.state.text}
-                  onChange={e => {
+                  onChange={(e) => {
                     this.setState({ text: e.target.value });
                   }}
                   hintText="Type a message..."
-                  fullWidth={true}
+                  fullWidth
                 />
               </form>
             </div>
@@ -160,5 +161,13 @@ class Chat extends Component {
     );
   }
 }
+
+Chat.propTypes = {
+  match: PropTypes.shape({
+    params: PropTypes.shape({
+      chatname: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
 
 export default Chat;
