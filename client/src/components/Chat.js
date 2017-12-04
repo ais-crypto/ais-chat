@@ -6,7 +6,6 @@ import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
-
 // TODO: migrate into component?
 const customBubble = props => (
   <div>
@@ -33,7 +32,8 @@ class Chat extends Component {
 
       // TODO: insert signature pair object
       this.socket.emit(
-        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+        'request_identity',
+        'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
       );
 
       this.socket.on('identity', signed_identity => {
@@ -44,17 +44,15 @@ class Chat extends Component {
 
         // TODO: put into if-statement (when server identity is verified)
         this.setState({
-          curr_user_identity: signed_identity,
-          curr_user: signed_identity.id,
+          curr_user: signed_identity,
           users: this.state.users.set(signed_identity.id, signed_identity)
         });
-
       });
 
       this.socket.emit('room', this.props.match.params.chatname);
 
       // TODO: emit identity with public key (w/out signature? extra state object?)
-      this.socket.emit('new_hello', this.state.curr_user_identity);
+      this.socket.emit('new_hello', this.state.curr_user);
       this.socket.on('hello', identity => {
         this.setState({
           users: this.state.users.set(identity.id, identity)
@@ -68,7 +66,7 @@ class Chat extends Component {
     });
 
     this.socket.on('new_hello', identity => {
-      this.socket.emit('hello', this.state.curr_user_identity);
+      this.socket.emit('hello', this.state.curr_user);
 
       this.setState({
         users: this.state.users.set(identity.id, identity)
@@ -85,9 +83,8 @@ class Chat extends Component {
 
       this.pushMessage(msg.sender, msg.text); // TODO: Change to correct user id
 
-      console.log(`curr_user: ${this.state.curr_user}`);
+      console.log(`curr_user: ${this.state.curr_user.id}`);
       console.log(`sender: ${msg.sender}`);
-
     });
 
     this.socket.on('disconnect', () => {
@@ -99,7 +96,6 @@ class Chat extends Component {
     this.socket.on('error', error => {
       console.error(error);
     });
-
   }
 
   onMessageSubmit(e) {
@@ -108,7 +104,7 @@ class Chat extends Component {
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       body: {
-        sender: this.state.curr_user,
+        sender: this.state.curr_user.id,
         signature: 'SIGNATURE HERE',
         text: this.state.text
       }
@@ -123,7 +119,7 @@ class Chat extends Component {
       message,
       senderName: this.state.users.get(sender).displayName
     });
-    if (sender === this.state.curr_user) {
+    if (sender === this.state.curr_user.id) {
       newMessage.id = 0;
     }
     this.setState({ messages: [...this.state.messages, newMessage] });
