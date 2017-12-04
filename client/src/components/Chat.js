@@ -6,16 +6,8 @@ import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
-import * as crypto from '../chat-crypto';
 
-// TODO: migrate to state and write methods to edit
-const users = {
-  0: 'You',
-  1: 'Mark',
-  2: 'Evan'
-};
-
-// TODO: migrate into component???
+// TODO: migrate into component?
 const customBubble = props => (
   <div>
     <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
@@ -30,21 +22,9 @@ class Chat extends Component {
 
     this.state = {
       text: '',
-      messages: [
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
-        new Message({
-          id: 2,
-          message: 'Hey! Evan here. react-chat-ui is pretty dooope.',
-          senderName: 'Evan'
-        }),
-        new Message({ id: 0, message: 'Chocolate!', senderName: 'Simon' }),
-        new Message({ id: 0, message: 'Ice cream!', senderName: 'Simon' })
-      ],
+      messages: [],
       useCustomBubble: false,
-      curr_user: 0,
-      users: Immutable.Map(),
+      users: Immutable.Map()
     };
 
     this.socket = io.connect();
@@ -66,10 +46,8 @@ class Chat extends Component {
         this.setState({
           curr_user_identity: signed_identity,
           curr_user: signed_identity.id,
-          users: this.state.users.set(signed_identity.id, signed_identity),
+          users: this.state.users.set(signed_identity.id, signed_identity)
         });
-
-        console.log(this.state.curr_user);
 
       });
 
@@ -79,7 +57,7 @@ class Chat extends Component {
       this.socket.emit('new_hello', this.state.curr_user_identity);
       this.socket.on('hello', identity => {
         this.setState({
-          users: this.state.users.set(identity.id, identity),
+          users: this.state.users.set(identity.id, identity)
         });
       });
 
@@ -93,7 +71,7 @@ class Chat extends Component {
       this.socket.emit('hello', this.state.curr_user_identity);
 
       this.setState({
-        users: this.state.users.set(identity.id, identity),
+        users: this.state.users.set(identity.id, identity)
       });
     });
 
@@ -106,6 +84,9 @@ class Chat extends Component {
       // TODO: verify signature of message (only push if verified)
 
       this.pushMessage(msg.sender, msg.text); // TODO: Change to correct user id
+
+      console.log(`curr_user: ${this.state.curr_user}`);
+      console.log(`sender: ${msg.sender}`);
 
     });
 
@@ -140,7 +121,7 @@ class Chat extends Component {
     const newMessage = new Message({
       id: sender,
       message,
-      senderName: this.state.users.get(sender).displayName,
+      senderName: this.state.users.get(sender).displayName
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
