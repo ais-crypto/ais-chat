@@ -7,12 +7,14 @@ import io from 'socket.io-client';
 
 import * as crypto from '../chat-crypto';
 
+// TODO: migrate to state and write methods to edit
 const users = {
   0: 'You',
   1: 'Mark',
   2: 'Evan'
 };
 
+// TODO: migrate into component??? 
 const customBubble = props => (
   <div>
     <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
@@ -28,18 +30,29 @@ class Chat extends Component {
     this.socket = io.connect();
     this.socket.on('connect', () => {
       console.log('socket.io connected');
-      this.socket.emit('request_identity', 'USER PUBLIC SIGNATURE KEY HERE');
+
+      // TODO: insert signature pair object
+      this.socket.emit(
+        'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
+      );
+
       this.socket.emit('room', this.props.match.params.chatname);
     });
 
-    this.socket.on('identity', msg => {
-      console.log(msg);
+    this.socket.on('identity', signed_identity => {
+      // TODO: verify identity
+      // TODO: store self identity to state
+
+      console.log(signed_identity);
     });
 
     this.socket.on('message', msg => {
+
+      // TODO: TO PROCEED understand chat logic
       console.log('new message received');
       console.log(msg);
-      this.pushMessage(2, msg.text); // Change to correct user id
+      this.pushMessage(2, msg.text); // TODO: Change to correct user id
+
     });
 
     this.socket.on('disconnect', () => {
@@ -49,7 +62,7 @@ class Chat extends Component {
       console.log('socket.io reconnected');
     });
     this.socket.on('error', error => {
-      console.log(error);
+      console.error(error);
     });
 
     this.state = {
@@ -99,7 +112,7 @@ class Chat extends Component {
   render() {
     // TODO: DEBUG STATEMENT FOR CRYPTO SCRIPTS
     console.log(`key pair generated: ${crypto.generateUserKeyPair()}`);
-    
+
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>

@@ -87,7 +87,10 @@ io.on('connection', socket => {
 
   socket.on('request_identity', signature_key => {
     const identity = Object.assign(socket.request.user, { signature_key });
+
+    // TODO: GENERATE SERVER SIGNATURES
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
+    
     const signed_identity = Object.assign(identity, { server_signature });
     console.log(signed_identity);
 
