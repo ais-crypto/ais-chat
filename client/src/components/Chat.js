@@ -5,6 +5,8 @@ import { Row, Col } from 'react-flexbox-grid';
 
 import io from 'socket.io-client';
 
+import * as crypto from '../chat-crypto';
+
 const users = {
   0: 'You',
   1: 'Mark',
@@ -95,6 +97,9 @@ class Chat extends Component {
   }
 
   render() {
+    // TODO: DEBUG STATEMENT FOR CRYPTO SCRIPTS
+    console.log(`key pair generated: ${crypto.generateUserKeyPair()}`);
+    
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>
