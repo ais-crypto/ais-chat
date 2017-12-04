@@ -85,7 +85,14 @@ io.use(
 io.on('connection', socket => {
   console.log(`${socket.request.user.displayName} has connected`);
 
-  io.to(socket.id).emit('user_info', socket.request.user);
+  socket.on('request_identity', signature_key => {
+    const identity = Object.assign(socket.request.user, { signature_key });
+    const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
+    const signed_identity = Object.assign(identity, { server_signature });
+    console.log(signed_identity);
+
+    io.to(socket.id).emit('identity', signed_identity);
+  });
 
   socket.on('room', room => {
     socket.join(room);

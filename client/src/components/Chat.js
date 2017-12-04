@@ -26,10 +26,11 @@ class Chat extends Component {
     this.socket = io.connect();
     this.socket.on('connect', () => {
       console.log('socket.io connected');
+      this.socket.emit('request_identity', 'USER PUBLIC SIGNATURE KEY HERE');
       this.socket.emit('room', this.props.match.params.chatname);
     });
 
-    this.socket.on('user_info', msg => {
+    this.socket.on('identity', msg => {
       console.log(msg);
     });
 
