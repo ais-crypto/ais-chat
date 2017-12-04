@@ -123,6 +123,9 @@ class Chat extends Component {
       message,
       senderName: this.state.users.get(sender).displayName
     });
+    if (sender == this.state.curr_user) {
+      newMessage.id = 0;
+    }
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
