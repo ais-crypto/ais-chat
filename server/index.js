@@ -5,11 +5,11 @@ import path from 'path';
 import http from 'http';
 import passport from 'passport';
 import socketio from 'socket.io';
-import router from './router';
-import auth from './auth';
 import SQLiteStore from 'connect-sqlite3';
 import passportSocketIo from 'passport.socketio';
 import cookieParser from 'cookie-parser';
+import router from './router';
+import auth from './auth';
 
 const app = express();
 const server = http.createServer(app);
@@ -20,10 +20,10 @@ const sess = {
   secret: process.env.SESSION_SECRET,
   resave: true,
   saveUninitialized: true,
-  cookie: {}
+  cookie: {},
 };
 
-const serializer = function(user, done) {
+const serializer = (user, done) => {
   done(null, user);
 };
 
@@ -64,28 +64,26 @@ app.get('/*', (req, res) => {
 });
 
 // socket.io security layer
-io.use(
-  passportSocketIo.authorize({
-    passport: passport,
-    key: 'connect.sid',
-    secret: sess.secret,
-    store: sess.store,
-    cookieParser: cookieParser,
-    success: (data, accept) => {
-      console.log('successful authentication');
-      accept();
-    },
-    fail: (data, message, error, accept) => {
-      console.log('failed authentication:', message);
-      accept(new Error(`authentication error: ${message}`));
-    }
-  })
-);
+io.use(passportSocketIo.authorize({
+  passport,
+  key: 'connect.sid',
+  secret: sess.secret,
+  store: sess.store,
+  cookieParser,
+  success: (data, accept) => {
+    console.log('successful authentication');
+    accept();
+  },
+  fail: (data, message, error, accept) => {
+    console.log('failed authentication:', message);
+    accept(new Error(`authentication error: ${message}`));
+  },
+}));
 
-io.on('connection', socket => {
+io.on('connection', (socket) => {
   console.log(`${socket.request.user.displayName} has connected`);
 
-  socket.on('request_identity', signature_key => {
+  socket.on('request_identity', (signature_key) => {
     const identity = Object.assign(socket.request.user, { signature_key });
 
     // TODO: GENERATE SERVER SIGNATURES & sign
@@ -93,34 +91,30 @@ io.on('connection', socket => {
 
     const signed_identity = Object.assign(identity, { server_signature });
 
-    console.log(
-      `Sending ${socket.request.user.displayName}'s signed identity.`
-    );
+    console.log(`Sending ${socket.request.user.displayName}'s signed identity.`);
 
     socket.emit('identity', signed_identity);
   });
 
-  socket.on('hello', message => {
+  socket.on('hello', (message) => {
     socket.join(message.room);
 
-    console.log(
-      `${message.identity.displayName} has joined room  ${message.room}`
-    );
+    console.log(`${message.identity.displayName} has joined room  ${message.room}`);
 
     socket.broadcast
       .to(message.room)
       .emit('hello', { socket: socket.id, identity: message.identity });
   });
 
-  socket.on('welcome', message => {
+  socket.on('welcome', (message) => {
     const room_users = io.sockets.adapter.rooms[message.room];
     socket.broadcast.to(message.to_socket).emit('welcome', {
       room_size: room_users.length,
-      identity: message.identity
+      identity: message.identity,
     });
   });
 
-  socket.on('message', message => {
+  socket.on('message', (message) => {
     console.log(`Message received from ${socket.request.user.displayName}:`);
     console.log(message);
     io.to(message.room).emit('message', message.body);
