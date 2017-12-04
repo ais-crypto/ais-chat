@@ -29,18 +29,7 @@ class Chat extends Component {
     this.socket.on('message', msg => {
       console.log('new message received');
       console.log(msg);
-      // this.setState({
-      //   messages: [
-      //     ...this.state.messages,
-      //     {
-      //       author: 'them', // change to msg.sender after changing package rendering
-      //       type: 'text',
-      //       data: {
-      //         text: msg.text
-      //       }
-      //     }
-      //   ]
-      // });
+      this.pushMessage(2, msg.text); // Change to correct user id
     });
 
     this.socket.on('disconnect', () => {
@@ -72,28 +61,28 @@ class Chat extends Component {
   }
 
   onMessageSubmit(e) {
-    const input = this.message;
+    const message = this.input.value;
     e.preventDefault();
-    if (!input.value) return false;
-    // console.log(message);
-    // this.socket.emit('message', {
-    //   room: this.props.match.params.chatname,
-    //   body: {
-    //     sender: '', // access cookie for userID or display name
-    //     signature: '',
-    //     text: message.data.text
-    //   }
-    // });
-    this.pushMessage(this.state.curr_user, input.value);
-    input.value = '';
+    if (!message) return false;
+    console.log(message);
+    this.socket.emit('message', {
+      room: this.props.match.params.chatname,
+      body: {
+        sender: '', // access cookie for userID or display name
+        signature: '',
+        text: message
+      }
+    });
+    this.pushMessage(this.state.curr_user, message);
+    this.input.value = '';
     return true;
   }
 
-  pushMessage(recipient, message) {
+  pushMessage(sender, message) {
     const newMessage = new Message({
-      id: recipient,
+      id: sender,
       message,
-      senderName: users[recipient]
+      senderName: users[sender]
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
@@ -112,8 +101,8 @@ class Chat extends Component {
 
           <form onSubmit={e => this.onMessageSubmit(e)}>
             <input
-              ref={m => {
-                this.message = m;
+              ref={i => {
+                this.input = i;
               }}
               placeholder="Type a message..."
               className="message-input"
