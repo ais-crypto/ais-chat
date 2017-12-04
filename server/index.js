@@ -88,10 +88,12 @@ io.on('connection', socket => {
   socket.on('request_identity', signature_key => {
     const identity = Object.assign(socket.request.user, { signature_key });
 
-    // TODO: GENERATE SERVER SIGNATURES
+    // TODO: GENERATE SERVER SIGNATURES & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
-    
+
     const signed_identity = Object.assign(identity, { server_signature });
+    
+    console.log(`${socket.request.user.displayName}'s signed identity:`);
     console.log(signed_identity);
 
     io.to(socket.id).emit('identity', signed_identity);

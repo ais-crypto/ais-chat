@@ -14,7 +14,7 @@ const users = {
   2: 'Evan'
 };
 
-// TODO: migrate into component??? 
+// TODO: migrate into component???
 const customBubble = props => (
   <div>
     <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
@@ -36,14 +36,21 @@ class Chat extends Component {
         'request_identity', 'USER PUBLIC SIGNATURE KEY AS OBJECT HERE'
       );
 
+      this.socket.on('identity', signed_identity => {
+        // TODO: verify identity
+        // TODO: store self identity to state
+
+        console.log(signed_identity);
+      });
+
       this.socket.emit('room', this.props.match.params.chatname);
-    });
 
-    this.socket.on('identity', signed_identity => {
-      // TODO: verify identity
-      // TODO: store self identity to state
+      // TODO: emit new member hello message,
+      // receive key information from everyone & store
+      // generate new group key (in chat-crypto) & communicate to everyone in pairs
 
-      console.log(signed_identity);
+      // TODO: prevent generating multiple group keys
+      // stop key generation if received new member hello message?
     });
 
     this.socket.on('message', msg => {
