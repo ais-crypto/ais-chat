@@ -1,6 +1,20 @@
 import React, { Component } from 'react';
-import { Launcher } from 'react-chat-window';
+import { ChatFeed, Message } from 'react-chat-ui';
 import io from 'socket.io-client';
+
+const users = {
+  0: 'You',
+  1: 'Mark',
+  2: 'Evan'
+};
+
+const customBubble = props => (
+  <div>
+    <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
+      props.message.message
+    }`}</p>
+  </div>
+);
 
 class Chat extends Component {
   constructor() {
@@ -12,52 +26,100 @@ class Chat extends Component {
       this.socket.emit('room', this.props.match.params.chatname);
     });
 
-    this.socket.on('message', (msg) => {
+    this.socket.on('message', msg => {
       console.log('new message received');
       console.log(msg);
-      this.setState({
-        messageList: [...this.state.messageList, {
-          author: 'them', // change to msg.sender after changing package rendering
-          type: 'text',
-          data: {
-            text: msg.text,
-          },
-        }]
-      });
+      // this.setState({
+      //   messages: [
+      //     ...this.state.messages,
+      //     {
+      //       author: 'them', // change to msg.sender after changing package rendering
+      //       type: 'text',
+      //       data: {
+      //         text: msg.text
+      //       }
+      //     }
+      //   ]
+      // });
     });
 
-    this.socket.on('disconnect', () => { console.log('socket.io disconnected'); });
-    this.socket.on('reconnect', () => { console.log('socket.io reconnected'); });
-    this.socket.on('error', (error) => { console.log(error); });
+    this.socket.on('disconnect', () => {
+      console.log('socket.io disconnected');
+    });
+    this.socket.on('reconnect', () => {
+      console.log('socket.io reconnected');
+    });
+    this.socket.on('error', error => {
+      console.log(error);
+    });
 
     this.state = {
-      messageList: [],
+      messages: [
+        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
+        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
+        new Message({ id: 1, message: 'Hey guys!', senderName: 'Mark' }),
+        new Message({
+          id: 2,
+          message: 'Hey! Evan here. react-chat-ui is pretty dooope.',
+          senderName: 'Evan'
+        }),
+        new Message({ id: 0, message: 'Chocolate!', senderName: 'Simon' }),
+        new Message({ id: 0, message: 'Ice cream!', senderName: 'Simon' })
+      ],
+      useCustomBubble: false,
+      curr_user: 0
     };
   }
 
-  onMessageWasSent(message) {
-    console.log(message);
-    this.socket.emit('message', {
-      room: this.props.match.params.chatname,
-      body: {
-        sender: '',  // access cookie for userID or display name
-        signature: '',
-        text: message.data.text,
-      },
+  onMessageSubmit(e) {
+    const input = this.message;
+    e.preventDefault();
+    if (!input.value) return false;
+    // console.log(message);
+    // this.socket.emit('message', {
+    //   room: this.props.match.params.chatname,
+    //   body: {
+    //     sender: '', // access cookie for userID or display name
+    //     signature: '',
+    //     text: message.data.text
+    //   }
+    // });
+    this.pushMessage(this.state.curr_user, input.value);
+    input.value = '';
+    return true;
+  }
+
+  pushMessage(recipient, message) {
+    const newMessage = new Message({
+      id: recipient,
+      message,
+      senderName: users[recipient]
     });
+    this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
   render() {
     console.log(this.props);
     return (
-      <div>
-        <Launcher
-          agentProfile={{
-            teamName: this.props.match.params.chatname
-          }}
-          onMessageWasSent={this.onMessageWasSent.bind(this)}
-          messageList={this.state.messageList}
-        />
+      <div className="container">
+        <div className="chatfeed-wrapper">
+          <ChatFeed
+            chatBubble={this.state.useCustomBubble && customBubble}
+            maxHeight={500}
+            messages={this.state.messages} // Boolean: list of message objects
+            showSenderName
+          />
+
+          <form onSubmit={e => this.onMessageSubmit(e)}>
+            <input
+              ref={m => {
+                this.message = m;
+              }}
+              placeholder="Type a message..."
+              className="message-input"
+            />
+          </form>
+        </div>
       </div>
     );
   }
