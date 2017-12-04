@@ -45,7 +45,6 @@ class Chat extends Component {
       useCustomBubble: false,
       curr_user: 0,
       users: Immutable.Map(),
-      user_identities: Immutable.Map(),
     };
 
     this.socket = io.connect();
@@ -63,7 +62,7 @@ class Chat extends Component {
         // TODO: put into if-statement (when server identity is verified)
         this.setState({
           curr_user_identity: signed_identity,
-          curr_user: signed_identity.user.id,
+          curr_user: signed_identity.id,
         });
 
         console.log(signed_identity);
@@ -75,12 +74,7 @@ class Chat extends Component {
       this.socket.emit('new-hello', this.state.curr_user_identity);
       this.socket.on('hello', identity => {
         this.setState({
-          users: this.state.users.set(
-            identity.user.id, identity.user.displayName
-          ),
-          user_identities: this.state.user_identities.set(
-            identity.user.id, identity
-          ),
+          users: this.state.users.set(identity.id, identity),
         });
       });
 
@@ -94,12 +88,7 @@ class Chat extends Component {
       this.socket.emit('hello', this.state.curr_user_identity);
 
       this.setState({
-        users: this.state.users.set(
-          identity.user.id, identity.user.displayName
-        ),
-        user_identities: this.state.user_identities.set(
-          identity.user.id, identity
-        ),
+        users: this.state.users.set(identity.id, identity),
       });
     });
 
@@ -146,7 +135,7 @@ class Chat extends Component {
     const newMessage = new Message({
       id: sender,
       message,
-      senderName: users[sender]
+      senderName: this.state.users[sender].displayName,
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
