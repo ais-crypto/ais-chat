@@ -85,6 +85,8 @@ io.use(
 io.on('connection', socket => {
   console.log(`${socket.request.user.displayName} has connected`);
 
+  io.to(socket.id).emit('user_info', socket.request.user);
+
   socket.on('room', room => {
     socket.join(room);
     console.log(`${socket.request.user.displayName} has joined room ${room}`);

@@ -29,6 +29,10 @@ class Chat extends Component {
       this.socket.emit('room', this.props.match.params.chatname);
     });
 
+    this.socket.on('user_info', msg => {
+      console.log(msg);
+    });
+
     this.socket.on('message', msg => {
       console.log('new message received');
       console.log(msg);
