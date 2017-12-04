@@ -45,6 +45,7 @@ class Chat extends Component {
       useCustomBubble: false,
       curr_user: 0,
       users: Immutable.Map(),
+      user_identities: Immutable.Map(),
     };
 
     this.socket = io.connect();
@@ -72,27 +73,45 @@ class Chat extends Component {
 
       // TODO: emit identity with public key (w/out signature? extra state object?)
       this.socket.emit('new-hello', this.state.curr_user_identity);
-      // receive key information from everyone & store
-      // generate new group key (in chat-crypto) & communicate to everyone in pairs
+      this.socket.on('hello', identity => {
+        this.setState({
+          users: this.state.users.set(
+            identity.user.id, identity.user.displayName
+          ),
+          user_identities: this.state.user_identities.set(
+            identity.user.id, identity
+          ),
+        });
+      });
+
+      // TODO: generate new group key (in chat-crypto) & communicate to everyone in pairs
 
       // TODO: prevent generating multiple group keys
       // stop key generation if received new member hello message?
     });
 
     this.socket.on('new-hello', identity => {
-      // TODO: figure out identity object & keys needed
-      // add user to list of users
+      this.socket.emit('hello', this.state.curr_user_identity);
+
       this.setState({
-        users: this.state.users.set(identity.user.id, identity),
+        users: this.state.users.set(
+          identity.user.id, identity.user.displayName
+        ),
+        user_identities: this.state.user_identities.set(
+          identity.user.id, identity
+        ),
       });
     });
 
     this.socket.on('message', msg => {
-
-      // TODO: TO PROCEED understand chat logic
       console.log('New message received:');
       console.log(msg);
-      this.pushMessage(2, msg.text); // TODO: Change to correct user id
+
+      // TODO: decrypt message
+
+      // TODO: verify signature of message (only push if verified)
+
+      this.pushMessage(msg.sender, msg.text); // TODO: Change to correct user id
 
     });
 
@@ -114,12 +133,11 @@ class Chat extends Component {
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       body: {
-        sender: '', // access cookie for userID or display name
-        signature: '',
+        sender: this.state.curr_user,
+        signature: 'SIGNATURE HERE',
         text: this.state.text
       }
     });
-    this.pushMessage(this.state.curr_user, this.state.text);
     this.setState({ text: '' });
     return true;
   }

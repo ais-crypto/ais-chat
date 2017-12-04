@@ -92,7 +92,7 @@ io.on('connection', socket => {
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
 
     const signed_identity = Object.assign(identity, { server_signature });
-    
+
     console.log(`${socket.request.user.displayName}'s signed identity:`);
     console.log(signed_identity);
 
@@ -106,7 +106,7 @@ io.on('connection', socket => {
 
   socket.on('message', message => {
     console.log(`message received`);
-    socket.broadcast.to(message.room).emit('message', message.body);
+    socket.to(message.room).emit('message', message.body);
   });
 
   socket.on('disconnect', () => {
