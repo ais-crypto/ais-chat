@@ -9,7 +9,8 @@
         "strict": 0,
         "quotes": [2, "single"],
         "no-else-return": 0,
-        "new-cap": ["error", {"capIsNewExceptions": ["Router", "Map"]}],
+        "new-cap": ["error", {"capIsNewExceptions": ["Router", "Map", "SQLiteStore"],
+          "newIsCapExceptions": ["socketio", "store"]},],
         "no-console": 0,
         "import/no-unresolved": [2, { "caseSensitive": false } ],
         "no-unused-vars": ["error", { "vars": "all", "args": "none" }],
@@ -24,6 +25,7 @@
           "DebuggerStatement"
         ],
         "no-debugger": "warn",
+        "no-param-reassign": [2, { "props": false }],
         "camelcase": [0, {properties: "never"}]
     },
 }
