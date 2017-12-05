@@ -61,7 +61,10 @@ class Chat extends Component {
     });
 
 
-    // TODO: add on 'room_request' to handle join requests
+    this.socket.on('room_request', (signed_id) => {
+      // TODO: verify id with signature
+      // TODO: add this user to the sidebar ui
+    });
 
 
     this.socket.on('hello', (user) => {

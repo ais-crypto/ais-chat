@@ -111,18 +111,20 @@ io.on('connection', (socket) => {
       });
       if (accepted.length === room_users.length) {
         socket.emit('request_accepted');
+        socket.join(req.room);
+        console
+          .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
       }
     } else {
       // automatically accept request and create room if nonexistent
       socket.emit('request_accepted');
+      socket.join(req.room);
+      console
+        .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
     }
   });
 
   socket.on('hello', (message) => {
-    socket.join(message.room);
-
-    console.log(`${message.identity.displayName} has joined room  ${message.room}`);
-
     socket.broadcast
       .to(message.room)
       .emit('hello', { socket: socket.id, identity: message.identity });
