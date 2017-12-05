@@ -80,27 +80,51 @@ io.use(passportSocketIo.authorize({
   },
 }));
 
+// socket.io single client connection
 io.on('connection', (socket) => {
   console.log(`${socket.request.user.displayName} has connected`);
 
   socket.on('request_identity', (signature_key) => {
     const identity = Object.assign(socket.request.user, { signature_key });
-
-    // TODO: GENERATE SERVER SIGNATURES & sign
+    // TODO: GENERATE SERVER SIGNATURES ON TOP & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
-
     const signed_identity = Object.assign(identity, { server_signature });
 
     console.log(`Sending ${socket.request.user.displayName}'s signed identity.`);
-
     socket.emit('identity', signed_identity);
   });
 
+  // TODO: on ('room_request')
+  // io.to(message.room)
+  // request to join room & receive confirmations before letting socket join
+  socket.on('room_request', (req) => {
+    io.to(req.room).emit('room_request', req.body);
+
+    if (io.sockets.adapter.rooms[req.room]) {
+      const room_users = io.sockets.adapter.rooms[req.room];
+      const accepted = new Set();
+      socket.on('accept_request', (accept) => {
+        // TODO: also VERIFY sender's SIGNATURE
+        if (accept.room === req.room && !accepted.has(accept.sender)) {
+          accepted.add(accept.sender);
+        }
+      });
+      if (accepted.length === room_users.length) {
+        socket.emit('request_accepted');
+        socket.join(req.room);
+        console
+          .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
+      }
+    } else {
+      // automatically accept request and create room if nonexistent
+      socket.emit('request_accepted');
+      socket.join(req.room);
+      console
+        .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
+    }
+  });
+
   socket.on('hello', (message) => {
-    socket.join(message.room);
-
-    console.log(`${message.identity.displayName} has joined room  ${message.room}`);
-
     socket.broadcast
       .to(message.room)
       .emit('hello', { socket: socket.id, identity: message.identity });
@@ -126,5 +150,4 @@ io.on('connection', (socket) => {
 });
 
 server.listen(app.get('port'));
-
 console.log(`Listening on: ${app.get('port')}`);
