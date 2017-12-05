@@ -80,25 +80,29 @@ io.use(passportSocketIo.authorize({
   },
 }));
 
+// socket.io single client connection
 io.on('connection', (socket) => {
   console.log(`${socket.request.user.displayName} has connected`);
 
   socket.on('request_identity', (signature_key) => {
     const identity = Object.assign(socket.request.user, { signature_key });
-
-    // TODO: GENERATE SERVER SIGNATURES & sign
+    // TODO: GENERATE SERVER SIGNATURES ON TOP & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
-
     const signed_identity = Object.assign(identity, { server_signature });
 
     console.log(`Sending ${socket.request.user.displayName}'s signed identity.`);
-
     socket.emit('identity', signed_identity);
   });
 
   // TODO: on ('room_request')
   // io.to(message.room)
   // request to join room & receive confirmations before letting socket join
+  socket.on('room_request', (req) => {
+    io.to(req.room).emit('room_request', req.body);
+
+    const room_users = io.sockets.adapter.rooms[req.room];
+    socket.emit('request_sent', room_users);
+  });
 
   socket.on('hello', (message) => {
     socket.join(message.room);
@@ -130,5 +134,4 @@ io.on('connection', (socket) => {
 });
 
 server.listen(app.get('port'));
-
 console.log(`Listening on: ${app.get('port')}`);

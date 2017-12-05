@@ -44,7 +44,13 @@ class Chat extends Component {
       // TODO: put into if-statement (when server identity is verified)
       this.setState({ curr_user: signed_identity });
 
-      // TODO: add 'room_request' message emission
+      this.socket.emit('room_request', {
+        room: this.props.match.params.chatname,
+        body: {
+          identity: this.state.curr_user,
+          signature: 'SIGNED WITH USER SIGNING KEY',
+        },
+      });
 
       // TODO: only send 'hello' if accepted
       this.socket.emit('hello', {
