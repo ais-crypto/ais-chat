@@ -100,8 +100,22 @@ io.on('connection', (socket) => {
   socket.on('room_request', (req) => {
     io.to(req.room).emit('room_request', req.body);
 
-    const room_users = io.sockets.adapter.rooms[req.room];
-    socket.emit('request_sent', room_users);
+    if (io.sockets.adapter.rooms[req.room]) {
+      const room_users = io.sockets.adapter.rooms[req.room];
+      const accepted = new Set();
+      socket.on('accept_request', (accept) => {
+        // TODO: also VERIFY sender's SIGNATURE
+        if (accept.room === req.room && !accepted.has(accept.sender)) {
+          accepted.add(accept.sender);
+        }
+      });
+      if (accepted.length === room_users.length) {
+        socket.emit('request_accepted');
+      }
+    } else {
+      // automatically accept request and create room if nonexistent
+      socket.emit('request_accepted');
+    }
   });
 
   socket.on('hello', (message) => {

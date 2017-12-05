@@ -52,10 +52,11 @@ class Chat extends Component {
         },
       });
 
-      // TODO: only send 'hello' if accepted
-      this.socket.emit('hello', {
-        room: this.props.match.params.chatname,
-        identity: this.state.curr_user,
+      this.socket.on('request_accepted', () => {
+        this.socket.emit('hello', {
+          room: this.props.match.params.chatname,
+          identity: this.state.curr_user,
+        });
       });
     });
 
