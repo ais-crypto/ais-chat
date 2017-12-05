@@ -96,6 +96,10 @@ io.on('connection', (socket) => {
     socket.emit('identity', signed_identity);
   });
 
+  // TODO: on ('room_request')
+  // io.to(message.room)
+  // request to join room & receive confirmations before letting socket join
+
   socket.on('hello', (message) => {
     socket.join(message.room);
 

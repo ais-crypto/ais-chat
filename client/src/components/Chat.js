@@ -19,6 +19,8 @@ class Chat extends Component {
     };
 
     this.socket = io.connect();
+
+
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
@@ -28,37 +30,47 @@ class Chat extends Component {
         'USER PUBLIC SIGNATURE KEY AS OBJECT HERE',
       );
 
-      // TODO: emit identity with public key (w/out signature? extra state object?)
-
-      // TODO: prevent generating multiple group keys
-      // stop key generation if received new member hello message?
+      // TODO: emit identity with public key (both signing and encryption keys?)
+      // (w/out signature? extra state object?)
     });
+
 
     this.socket.on('identity', (signed_identity) => {
       console.log('Identity received:');
       console.log(signed_identity);
 
       // TODO: verify identity
+
       // TODO: put into if-statement (when server identity is verified)
       this.setState({ curr_user: signed_identity });
 
+      // TODO: add 'room_request' message emission
+
+      // TODO: only send 'hello' if accepted
       this.socket.emit('hello', {
         room: this.props.match.params.chatname,
         identity: this.state.curr_user,
       });
     });
 
+
+    // TODO: add on 'room_request' to handle join requests
+
+
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.id}`);
+
       this.setState({
         users: this.state.users.set(user.identity.id, user.identity),
       });
+
       this.socket.emit('welcome', {
         room: this.props.match.params.chatname,
         to_socket: user.socket,
         identity: this.state.curr_user,
       });
     });
+
 
     this.socket.on('welcome', (msg) => {
       console.log(`Received welcome from: ${msg.identity.id}`);
@@ -70,36 +82,48 @@ class Chat extends Component {
       }
     });
 
+
     this.socket.on('message', (msg) => {
       console.log('New message received:');
       console.log(msg);
 
       // TODO: decrypt message
 
-      // TODO: verify signature of message (only push if verified)
-
+      // TODO: verify signature of message (only push IF verified)
       this.pushMessage(msg.sender, msg.text);
 
       console.log(`curr_user: ${this.state.curr_user.id}`);
       console.log(`sender: ${msg.sender}`);
     });
 
+
     this.socket.on('disconnect', () => {
       console.log('socket.io disconnected');
     });
+
+
     this.socket.on('reconnect', () => {
       console.log('socket.io reconnected');
     });
+
+
     this.socket.on('error', (error) => {
       console.error(error);
     });
   }
 
+
   onMessageSubmit(e) {
     e.preventDefault();
     if (!this.state.text) return false;
+
+    // TODO: generate new group key & make group_keys object for message
+
+    // TODO: sign message & add to signature
+
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
+      group_keys: { id: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
       body: {
         sender: this.state.curr_user.id,
         signature: 'SIGNATURE HERE',
@@ -109,6 +133,7 @@ class Chat extends Component {
     this.setState({ text: '' });
     return true;
   }
+
 
   pushMessage(sender, message) {
     const isOwnMessage = sender === this.state.curr_user.id;
@@ -122,6 +147,7 @@ class Chat extends Component {
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
+
   render() {
     const customBubble = props => (
       <div>
@@ -132,9 +158,16 @@ class Chat extends Component {
       </div>
     );
 
+    // TODO: fix this card column ui & possibly separate out into separate Component
+
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={8} xsOffset={2}>
+          <Card className="container">
+            {this.state.users.map(u => (
+              <div>{u.displayName}</div>
+            ))}
+          </Card>
           <Card className="container">
             <div className="chatfeed-wrapper">
               <ChatFeed
