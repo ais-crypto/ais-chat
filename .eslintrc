@@ -25,7 +25,6 @@
           "DebuggerStatement"
         ],
         "no-debugger": "warn",
-        "no-param-reassign": [2, { "props": false }],
         "camelcase": [0, {properties: "never"}]
     },
 }
