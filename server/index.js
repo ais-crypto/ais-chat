@@ -98,7 +98,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('room_request', (req) => {
-    io.to(req.room).emit('room_request', { signed_id: req.body });
+    io.to(req.room).emit('room_request', req.body);
 
     if (!io.sockets.adapter.rooms[req.room]) {
       socket.emit('request_accepted');
@@ -106,6 +106,17 @@ io.on('connection', (socket) => {
       console.log(`${req.body.identity.displayName} has been accepted to room ${
         req.room
       }`);
+    }
+  });
+
+  socket.on('accept_request', (accept) => {
+    console.log('accepted');
+    // TODO: also VERIFY sender's SIGNATURE
+    if (io.sockets.adapter.rooms[accept.room]) {
+      io.to(accept.socket_id).emit('request_accepted');
+      const acc_socket = io.sockets.connected[accept.socket_id];
+      acc_socket.join(accept.room);
+      console.log(`${accept.displayName} has been accepted to ${accept.room}`);
     }
   });
 
@@ -133,18 +144,6 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`${socket.request.user.displayName} has disconnected`);
   });
-});
-
-// socket.io handle room requests
-io.on('accept_request', (accept) => {
-  console.log('accepted');
-  // TODO: also VERIFY sender's SIGNATURE
-  // TODO: NEED socket.io-redis to make this work
-  if (accept.room === req.room) {
-    socket.emit('request_accepted');
-    socket.join(req.room);
-    console.log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
-  }
 });
 
 server.listen(app.get('port'));
