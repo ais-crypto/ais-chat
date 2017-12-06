@@ -87,7 +87,7 @@ io.on('connection', (socket) => {
   socket.on('request_identity', (keys) => {
     const identity = Object.assign(socket.request.user, {
       keys,
-      socket_id: socket.id,
+      socketId: socket.id,
     });
     // TODO: GENERATE SERVER SIGNATURES ON TOP & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
@@ -113,8 +113,8 @@ io.on('connection', (socket) => {
     console.log('accepted');
     // TODO: also VERIFY sender's SIGNATURE
     if (io.sockets.adapter.rooms[accept.room]) {
-      io.to(accept.socket_id).emit('request_accepted');
-      const accepted_socket = io.sockets.connected[accept.socket_id];
+      io.to(accept.socketId).emit('request_accepted');
+      const accepted_socket = io.sockets.connected[accept.socketId];
       accepted_socket.join(accept.room);
       console.log(`${accept.displayName} has been accepted to ${accept.room}`);
     }

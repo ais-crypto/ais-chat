@@ -193,7 +193,7 @@ class Chat extends Component {
                     // TODO: SIGN THE ACCEPTANCE BOOLEAN
                     const acceptance = {
                       room: this.props.match.params.chatname,
-                      socket_id: u.socket_id,
+                      socketId: u.socketId,
                       displayName: u.displayName,
                       signature: 'INSERT SIGNATURE HERE',
                     };
