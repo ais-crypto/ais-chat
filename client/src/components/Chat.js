@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ChatFeed, Message } from 'react-chat-ui';
-import { Card, TextField } from 'material-ui';
+import { Card, TextField, RaisedButton } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
 
@@ -16,6 +16,7 @@ class Chat extends Component {
       messages: [],
       useCustomBubble: false,
       users: Immutable.Map(),
+      user_requests: Immutable.Map(),
     };
 
     this.socket = io.connect();
@@ -60,13 +61,20 @@ class Chat extends Component {
 
     this.socket.on('room_request', (signed_id) => {
       // TODO: verify id with signature
-      // TODO: add this user to the sidebar ui
+
+      this.setState({
+        user_requests: this.state.user_requests.set(
+          signed_id.identity.id,
+          signed_id.identity,
+        ),
+      });
     });
 
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.id}`);
 
       this.setState({
+        user_requests: this.state.user_requests.delete(user.identity.id),
         users: this.state.users.set(user.identity.id, user.identity),
       });
 
@@ -157,15 +165,32 @@ class Chat extends Component {
       </div>
     );
 
-    const memberRequest = props => <div />;
-
-    // TODO: fix this card column ui & possibly separate out into separate Component
+    // TODO: fix this card column ui
+    // & possibly separate out into separate Component
 
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
         <Col xs={2}>
           <Card className="container">
             {this.state.users.map(u => <div>{u.displayName}</div>)}
+          </Card>
+          <Card className="container">
+            {this.state.user_requests.map(u => (
+              <div>
+                <div>{u.displayName}</div>
+                <RaisedButton
+                  label="Accept"
+                  onClick={() => {
+                    // TODO: SIGN THE ACCEPTANCE BOOLEAN
+                    const acceptance = {
+                      status: true,
+                      signature: 'INSERT SIGNATURE HERE',
+                    };
+                    this.socket.emit('accept_request', acceptance);
+                  }}
+                />
+              </div>
+            ))}
           </Card>
         </Col>
         <Col xs={8}>
@@ -174,7 +199,7 @@ class Chat extends Component {
               <ChatFeed
                 chatBubble={this.state.useCustomBubble && customBubble}
                 maxHeight={500}
-                messages={this.state.messages} // Boolean: list of message objects
+                messages={this.state.messages}
                 showSenderName
               />
 
