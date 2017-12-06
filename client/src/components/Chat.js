@@ -34,11 +34,22 @@ class Chat extends Component {
 
     this.socket.on('connect', () => {
       console.log('socket.io connected');
-      crypto.signAndVerifyTest('AIS!');
-      this.socket.emit('request_identity', {
-        verificationKey: 'VERIFICATION KEY AS OBJECT HERE',
-        encryptionKey: 'USER PUBLIC ENCRYPTION KEY AS OBJECT HERE',
-      });
+
+      this.keys = {}; // will store signature and encryption key pairs
+      crypto
+        .generateSignatureKeyPair()
+        .then((key) => {
+          this.keys.signature = key;
+        })
+        .then(() => {
+          crypto.generateAsymmetricEncryptionKeyPair().then((key) => {
+            this.keys.encryption = key;
+            this.socket.emit('request_identity', {
+              signature: this.keys.signature.publicKey,
+              encryption: this.keys.encryption.publicKey,
+            });
+          });
+        });
     });
 
     // TODO: emit identity with public key (both signing and encryption keys?)
