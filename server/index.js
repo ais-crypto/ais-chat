@@ -114,8 +114,8 @@ io.on('connection', (socket) => {
     // TODO: also VERIFY sender's SIGNATURE
     if (io.sockets.adapter.rooms[accept.room]) {
       io.to(accept.socket_id).emit('request_accepted');
-      const acc_socket = io.sockets.connected[accept.socket_id];
-      acc_socket.join(accept.room);
+      const accepted_socket = io.sockets.connected[accept.socket_id];
+      accepted_socket.join(accept.room);
       console.log(`${accept.displayName} has been accepted to ${accept.room}`);
     }
   });
