@@ -135,7 +135,7 @@ export function symmetricEncrypt(key, message) {
   return window.crypto.subtle.encrypt(
     {
       name: 'AES-GCM',
-      iv: window.crypto.getRandomValues(new Uint8Array(12)),
+      iv,
     },
     key,
     data,
@@ -161,9 +161,9 @@ export function symmetricDecrypt(key, message) {
     key,
     body,
   ).then((data) => {
-    console.log(data);
     const decoded = dec.decode(data);
     console.log(decoded);
+    return decoded;
   });
 }
 
@@ -177,11 +177,12 @@ export function symmetricKeyTest(text) {
       console.log('encrypted successfully');
       console.log(encrypted);
       symmetricDecrypt(key, encrypted).then((decrypted) => {
-        console.log(`decrypted: ${decrypted}`);
+        console.log(decrypted);
       });
     });
   });
 }
+
 
 /*
 export function processIncomingMessage(personalKeys, userID, signatureKey, msg) {
