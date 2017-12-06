@@ -123,7 +123,7 @@ io.on('connection', (socket) => {
   socket.on('hello', (message) => {
     socket.broadcast
       .to(message.room)
-      .emit('hello', { socket: socket.id, identity: message.identity });
+      .emit('hello', { socketId: socket.id, identity: message.identity });
   });
 
   socket.on('welcome', (message) => {

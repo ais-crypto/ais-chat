@@ -68,31 +68,31 @@ class Chat extends Component {
 
       this.setState({
         userRequests: this.state.userRequests.set(
-          signed_id.identity.id,
+          signed_id.identity.socketId,
           signed_id.identity,
         ),
       });
     });
 
     this.socket.on('hello', (user) => {
-      console.log(`User joined room: ${user.identity.id}`);
+      console.log(`User joined room: ${user.identity.socketId}`);
 
       this.setState({
-        userRequests: this.state.userRequests.delete(user.identity.id),
-        users: this.state.users.set(user.identity.id, user.identity),
+        userRequests: this.state.userRequests.delete(user.identity.socketId),
+        users: this.state.users.set(user.identity.socketId, user.identity),
       });
 
       this.socket.emit('welcome', {
         room: this.props.match.params.chatname,
-        to_socket: user.socket,
+        to_socket: user.socketId,
         identity: this.state.currUser,
       });
     });
 
     this.socket.on('welcome', (msg) => {
-      console.log(`Received welcome from: ${msg.identity.id}`);
+      console.log(`Received welcome from: ${msg.identity.socketId}`);
       this.setState({
-        users: this.state.users.set(msg.identity.id, msg.identity),
+        users: this.state.users.set(msg.identity.socketId, msg.identity),
       });
       if (this.state.users.size === msg.room_size - 1) {
         console.log('Received welcome from all participants');
@@ -113,7 +113,7 @@ class Chat extends Component {
 
       this.pushMessage(msg.sender, msg.text);
 
-      console.log(`currUser: ${this.state.currUser.id}`);
+      console.log(`currUser: ${this.state.currUser.socketId}`);
       console.log(`sender: ${msg.sender}`);
     });
 
@@ -142,7 +142,7 @@ class Chat extends Component {
       room: this.props.match.params.chatname,
       group_keys: { userId: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
       body: {
-        sender: this.state.currUser.id,
+        sender: this.state.currUser.socketId,
         signature: 'SIGNATURE HERE',
         text: this.state.text,
       },
@@ -152,7 +152,7 @@ class Chat extends Component {
   }
 
   pushMessage(sender, message) {
-    const isOwnMessage = sender === this.state.currUser.id;
+    const isOwnMessage = sender === this.state.currUser.socketId;
     const newMessage = new Message({
       id: isOwnMessage ? 0 : sender,
       message,
@@ -195,7 +195,7 @@ class Chat extends Component {
                       room: this.props.match.params.chatname,
                       socketId: u.socketId,
                       displayName: u.displayName,
-                      signature: 'INSERT SIGNATURE HERE',
+                      signature: 'INSERT SIGNATURE TO SOCKETID HERE',
                     };
                     this.socket.emit('accept_request', acceptance);
                   }}
