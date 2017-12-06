@@ -16,8 +16,6 @@ import Immutable from 'immutable';
 
 import io from 'socket.io-client';
 
-import * as crypto from '../crypto';
-
 class Chat extends Component {
   constructor() {
     super();
@@ -205,7 +203,6 @@ class Chat extends Component {
   }
 
   render() {
-    crypto.getCurrTime();
     const customBubble = props => (
       <div>
         <p>
