@@ -1,7 +1,16 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ChatFeed, Message } from 'react-chat-ui';
-import { Card, TextField, RaisedButton } from 'material-ui';
+import {
+  List,
+  ListItem,
+  Card,
+  TextField,
+  RaisedButton,
+  Avatar,
+  Subheader,
+  Divider,
+} from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
 
@@ -204,32 +213,51 @@ class Chat extends Component {
       </div>
     );
 
-    // TODO: fix this card column ui
-    // & possibly separate out into separate Component
+    const activeUsers = this.state.users.valueSeq().map((user) => {
+      return (
+        <ListItem
+          key={user.socketId}
+          primaryText={user.displayName}
+          leftAvatar={<Avatar src={user.photos[0].value} />}
+        />
+      );
+    });
+
+    const requestingUsers = this.state.userRequests.valueSeq().map((user) => {
+      return (
+        <ListItem
+          key={user.socketId}
+          primaryText={user.displayName}
+          leftAvatar={<Avatar src={user.photos[0].value} />}
+        >
+          <RaisedButton
+            label="Accept"
+            onClick={() => this.replyToRoomRequest(user, true)}
+          />
+          <RaisedButton
+            label="Decline"
+            onClick={() => this.replyToRoomRequest(user, false)}
+          />
+        </ListItem>
+      );
+    });
 
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
-        <Col xs={2}>
+        <Col xsOffset={1} xs={3}>
           <Card className="container">
-            {this.state.users.map(u => <div>{u.displayName}</div>)}
-          </Card>
-          <Card className="container">
-            {this.state.userRequests.map(u => (
-              <div>
-                <div>{u.displayName}</div>
-                <RaisedButton
-                  label="Accept"
-                  onClick={() => this.replyToRoomRequest(u, true)}
-                />
-                <RaisedButton
-                  label="Decline"
-                  onClick={() => this.replyToRoomRequest(u, false)}
-                />
-              </div>
-            ))}
+            <List>
+              <Subheader>Active users</Subheader>
+              {activeUsers}
+            </List>
+            <Divider />
+            <List>
+              <Subheader>Awaiting approval</Subheader>
+              {requestingUsers}
+            </List>
           </Card>
         </Col>
-        <Col xs={8}>
+        <Col xs={7}>
           <Card className="container">
             <div className="chatfeed-wrapper">
               <ChatFeed
