@@ -6,10 +6,10 @@ if (!primitives.isWebCryptoAPISupported) {
 }
 */
 // generateUserKeyPair.((key) => {this.key = key})
+import { TextEncoder, TextDecoder } from 'text-encoding';
 
 const enc = new TextEncoder('utf-8');
 const dec = new TextDecoder('utf-8');
-
 
 // returns keyPair object
 // RSA PSS recommended over RSA PKCS1v1_5
@@ -93,14 +93,16 @@ export function asymmetricEncrypt(publicKey, message) {
 
 // returns decrypted message as string
 export function asymmetricDecrypt(privateKey, message) {
-  return window.crypto.subtle.decrypt(
-    {
-      name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
-    },
-    privateKey,
-    message,
-  ).then(data => dec.decode(data));
+  return window.crypto.subtle
+    .decrypt(
+      {
+        name: 'RSA-OAEP',
+        // label: Uint8Array([...]) //optional
+      },
+      privateKey,
+      message,
+    )
+    .then(data => dec.decode(data));
 }
 
 export function asymmetricKeyTest(message) {
@@ -132,20 +134,22 @@ export function symmetricEncrypt(key, message) {
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   message.iv = iv;
   console.log(`iv:${iv}`);
-  return window.crypto.subtle.encrypt(
-    {
-      name: 'AES-GCM',
-      iv,
-    },
-    key,
-    data,
-  ).then((encrypted) => {
-    message.body = encrypted;
-    console.log(`encrypted: ${message.body}`);
-    console.log(`iv:${message.iv}`);
-    console.log(`message:${message}`);
-    return message;
-  });
+  return window.crypto.subtle
+    .encrypt(
+      {
+        name: 'AES-GCM',
+        iv,
+      },
+      key,
+      data,
+    )
+    .then((encrypted) => {
+      message.body = encrypted;
+      console.log(`encrypted: ${message.body}`);
+      console.log(`iv:${message.iv}`);
+      console.log(`message:${message}`);
+      return message;
+    });
 }
 
 // message: ArrayBuffer of the data
@@ -153,18 +157,20 @@ export function symmetricEncrypt(key, message) {
 export function symmetricDecrypt(key, message) {
   const { iv, body } = message;
   console.log(`in Decrypt: iv:${iv}, message body: ${body}`);
-  return window.crypto.subtle.decrypt(
-    {
-      name: 'AES-GCM',
-      iv, // The initialization vector you used to encrypt
-    },
-    key,
-    body,
-  ).then((data) => {
-    const decoded = dec.decode(data);
-    console.log(decoded);
-    return decoded;
-  });
+  return window.crypto.subtle
+    .decrypt(
+      {
+        name: 'AES-GCM',
+        iv, // The initialization vector you used to encrypt
+      },
+      key,
+      body,
+    )
+    .then((data) => {
+      const decoded = dec.decode(data);
+      console.log(decoded);
+      return decoded;
+    });
 }
 
 export function symmetricKeyTest(text) {
@@ -182,7 +188,6 @@ export function symmetricKeyTest(text) {
     });
   });
 }
-
 
 /*
 export function processIncomingMessage(personalKeys, userID, signatureKey, msg) {
