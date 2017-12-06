@@ -85,7 +85,10 @@ io.on('connection', (socket) => {
   console.log(`${socket.request.user.displayName} has connected`);
 
   socket.on('request_identity', (signature_key) => {
-    const identity = Object.assign(socket.request.user, { signature_key });
+    const identity = Object.assign(socket.request.user, {
+      signature_key,
+      socket_id: socket.id,
+    });
     // TODO: GENERATE SERVER SIGNATURES ON TOP & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
     const signed_identity = Object.assign(identity, { server_signature });
@@ -94,33 +97,26 @@ io.on('connection', (socket) => {
     socket.emit('identity', signed_identity);
   });
 
-  // TODO: on ('room_request')
-  // io.to(message.room)
-  // request to join room & receive confirmations before letting socket join
   socket.on('room_request', (req) => {
     io.to(req.room).emit('room_request', req.body);
 
-    if (io.sockets.adapter.rooms[req.room]) {
-      const room_users = io.sockets.adapter.rooms[req.room];
-      const accepted = new Set();
-      socket.on('accept_request', (accept) => {
-        // TODO: also VERIFY sender's SIGNATURE
-        if (accept.room === req.room && !accepted.has(accept.sender)) {
-          accepted.add(accept.sender);
-        }
-      });
-      if (accepted.length === room_users.length) {
-        socket.emit('request_accepted');
-        socket.join(req.room);
-        console
-          .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
-      }
-    } else {
-      // automatically accept request and create room if nonexistent
+    if (!io.sockets.adapter.rooms[req.room]) {
       socket.emit('request_accepted');
       socket.join(req.room);
-      console
-        .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
+      console.log(`${req.body.identity.displayName} has been accepted to room ${
+        req.room
+      }`);
+    }
+  });
+
+  socket.on('accept_request', (accept) => {
+    console.log('accepted');
+    // TODO: also VERIFY sender's SIGNATURE
+    if (io.sockets.adapter.rooms[accept.room]) {
+      io.to(accept.socket_id).emit('request_accepted');
+      const accepted_socket = io.sockets.connected[accept.socket_id];
+      accepted_socket.join(accept.room);
+      console.log(`${accept.displayName} has been accepted to ${accept.room}`);
     }
   });
 
@@ -139,6 +135,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('message', (message) => {
+    // TODO: only send message if sender is in the room
     console.log(`Message received from ${socket.request.user.displayName}:`);
     console.log(message);
     io.to(message.room).emit('message', message.body);

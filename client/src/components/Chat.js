@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { ChatFeed, Message } from 'react-chat-ui';
-import { Card, TextField } from 'material-ui';
+import { Card, TextField, RaisedButton } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
 
@@ -16,10 +16,10 @@ class Chat extends Component {
       messages: [],
       useCustomBubble: false,
       users: Immutable.Map(),
+      user_requests: Immutable.Map(),
     };
 
     this.socket = io.connect();
-
 
     this.socket.on('connect', () => {
       console.log('socket.io connected');
@@ -33,7 +33,6 @@ class Chat extends Component {
       // TODO: emit identity with public key (both signing and encryption keys?)
       // (w/out signature? extra state object?)
     });
-
 
     this.socket.on('identity', (signed_identity) => {
       console.log('Identity received:');
@@ -60,17 +59,22 @@ class Chat extends Component {
       });
     });
 
-
     this.socket.on('room_request', (signed_id) => {
       // TODO: verify id with signature
-      // TODO: add this user to the sidebar ui
-    });
 
+      this.setState({
+        user_requests: this.state.user_requests.set(
+          signed_id.identity.id,
+          signed_id.identity,
+        ),
+      });
+    });
 
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.id}`);
 
       this.setState({
+        user_requests: this.state.user_requests.delete(user.identity.id),
         users: this.state.users.set(user.identity.id, user.identity),
       });
 
@@ -81,7 +85,6 @@ class Chat extends Component {
       });
     });
 
-
     this.socket.on('welcome', (msg) => {
       console.log(`Received welcome from: ${msg.identity.id}`);
       this.setState({
@@ -91,7 +94,6 @@ class Chat extends Component {
         console.log('Received welcome from all participants');
       }
     });
-
 
     this.socket.on('message', (msg) => {
       console.log('New message received:');
@@ -106,22 +108,18 @@ class Chat extends Component {
       console.log(`sender: ${msg.sender}`);
     });
 
-
     this.socket.on('disconnect', () => {
       console.log('socket.io disconnected');
     });
-
 
     this.socket.on('reconnect', () => {
       console.log('socket.io reconnected');
     });
 
-
     this.socket.on('error', (error) => {
       console.error(error);
     });
   }
-
 
   onMessageSubmit(e) {
     e.preventDefault();
@@ -144,7 +142,6 @@ class Chat extends Component {
     return true;
   }
 
-
   pushMessage(sender, message) {
     const isOwnMessage = sender === this.state.curr_user.id;
     const newMessage = new Message({
@@ -157,33 +154,54 @@ class Chat extends Component {
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
-
   render() {
     const customBubble = props => (
       <div>
-        <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
-          props.message.message
-        }`}
+        <p>
+          {`${props.message.senderName} ${
+            props.message.id ? 'says' : 'said'
+          }: ${props.message.message}`}
         </p>
       </div>
     );
 
-    // TODO: fix this card column ui & possibly separate out into separate Component
+    // TODO: fix this card column ui
+    // & possibly separate out into separate Component
 
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
-        <Col xs={8} xsOffset={2}>
+        <Col xs={2}>
           <Card className="container">
-            {this.state.users.map(u => (
-              <div>{u.displayName}</div>
+            {this.state.users.map(u => <div>{u.displayName}</div>)}
+          </Card>
+          <Card className="container">
+            {this.state.user_requests.map(u => (
+              <div>
+                <div>{u.displayName}</div>
+                <RaisedButton
+                  label="Accept"
+                  onClick={() => {
+                    // TODO: SIGN THE ACCEPTANCE BOOLEAN
+                    const acceptance = {
+                      room: this.props.match.params.chatname,
+                      socket_id: u.socket_id,
+                      displayName: u.displayName,
+                      signature: 'INSERT SIGNATURE HERE',
+                    };
+                    this.socket.emit('accept_request', acceptance);
+                  }}
+                />
+              </div>
             ))}
           </Card>
+        </Col>
+        <Col xs={8}>
           <Card className="container">
             <div className="chatfeed-wrapper">
               <ChatFeed
                 chatBubble={this.state.useCustomBubble && customBubble}
                 maxHeight={500}
-                messages={this.state.messages} // Boolean: list of message objects
+                messages={this.state.messages}
                 showSenderName
               />
 
