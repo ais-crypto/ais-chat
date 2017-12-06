@@ -84,7 +84,7 @@ class Chat extends Component {
 
       this.socket.emit('welcome', {
         room: this.props.match.params.chatname,
-        to_socket: user.socketId,
+        to_socket: user.identity.socketId,
         identity: this.state.currUser,
       });
     });
