@@ -163,6 +163,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    io.emit('bye', socket.id);
     console.log(`${socket.request.user.displayName} has disconnected`);
   });
 });

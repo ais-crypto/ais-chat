@@ -127,6 +127,13 @@ class Chat extends Component {
       console.log(`sender: ${msg.sender}`);
     });
 
+    this.socket.on('bye', (socket) => {
+      this.setState({
+        userRequests: this.state.userRequests.delete(socket),
+        users: this.state.users.delete(socket),
+      });
+    });
+
     this.socket.on('disconnect', () => {
       console.log('socket.io disconnected');
     });
