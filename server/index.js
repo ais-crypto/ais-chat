@@ -84,8 +84,8 @@ io.use(passportSocketIo.authorize({
 io.on('connection', (socket) => {
   console.log(`${socket.request.user.displayName} has connected`);
 
-  socket.on('request_identity', (signature_key) => {
-    const identity = Object.assign(socket.request.user, { signature_key });
+  socket.on('request_identity', (keys) => {
+    const identity = Object.assign(socket.request.user, { keys });
     // TODO: GENERATE SERVER SIGNATURES ON TOP & sign
     const server_signature = 'SERVER SIGNATURE FOR IDENTITY OBJECT HERE';
     const signed_identity = Object.assign(identity, { server_signature });

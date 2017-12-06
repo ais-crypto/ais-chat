@@ -20,21 +20,23 @@ class Chat extends Component {
 
     this.socket = io.connect();
 
-
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
-      // TODO: insert signature pair object
       this.socket.emit(
         'request_identity',
-        'USER PUBLIC SIGNATURE KEY AS OBJECT HERE',
+        {
+          verificationKey: 'VERIFICATION KEY AS OBJECT HERE',
+          encryptionKey: 'USER PUBLIC ENCRYPTION KEY AS OBJECT HERE',
+        },
       );
-
-      // TODO: emit identity with public key (both signing and encryption keys?)
-      // (w/out signature? extra state object?)
     });
 
+    // TODO: emit identity with public key (both signing and encryption keys?)
+    // (w/out signature? extra state object?)
 
+
+    // TODO: Don't allow any message submissions until identity is stablished
     this.socket.on('identity', (signed_identity) => {
       console.log('Identity received:');
       console.log(signed_identity);
@@ -97,9 +99,16 @@ class Chat extends Component {
       console.log('New message received:');
       console.log(msg);
 
-      // TODO: decrypt message
 
       // TODO: verify signature of message (only push IF verified)
+
+
+      // TODO: decrypt message
+
+      // crypto.decrypt(this.state.users.get(msg.sender).encryptionKey).then((msg) => {
+
+      // });
+
       this.pushMessage(msg.sender, msg.text);
 
       console.log(`curr_user: ${this.state.curr_user.id}`);
