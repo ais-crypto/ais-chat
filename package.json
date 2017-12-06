@@ -11,16 +11,15 @@
     "passport": "^0.4.0",
     "passport-google-oauth": "^1.0.0",
     "passport.socketio": "^3.7.0",
+    "sdk": "^0.5.0",
     "socket.io": "^2.0.4"
   },
   "scripts": {
     "postinstall": "cd client && npm install",
     "start": "node build/index.js",
     "watch": "babel-watch server/index.js",
-    "dev":
-      "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
-    "build":
-      "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
+    "dev": "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
+    "build": "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
     "lint": "eslint ."
   },
   "devDependencies": {
