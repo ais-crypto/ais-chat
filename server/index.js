@@ -136,9 +136,13 @@ io.on('connection', (socket) => {
 
   socket.on('message', (message) => {
     // TODO: only send message if sender is in the room
-    console.log(`Message received from ${socket.request.user.displayName}:`);
-    console.log(message);
-    io.to(message.room).emit('message', message.body);
+    if (message.room in socket.rooms) {
+      console.log(`Sending message from ${socket.request.user.displayName} to ${
+        message.room
+      }:`);
+      console.log(message);
+      io.to(message.room).emit('message', message.body);
+    }
   });
 
   socket.on('disconnect', () => {
