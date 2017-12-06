@@ -20,7 +20,6 @@ class Chat extends Component {
 
     this.socket = io.connect();
 
-
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
@@ -33,7 +32,6 @@ class Chat extends Component {
       // TODO: emit identity with public key (both signing and encryption keys?)
       // (w/out signature? extra state object?)
     });
-
 
     this.socket.on('identity', (signed_identity) => {
       console.log('Identity received:');
@@ -60,12 +58,10 @@ class Chat extends Component {
       });
     });
 
-
     this.socket.on('room_request', (signed_id) => {
       // TODO: verify id with signature
       // TODO: add this user to the sidebar ui
     });
-
 
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.id}`);
@@ -81,7 +77,6 @@ class Chat extends Component {
       });
     });
 
-
     this.socket.on('welcome', (msg) => {
       console.log(`Received welcome from: ${msg.identity.id}`);
       this.setState({
@@ -91,7 +86,6 @@ class Chat extends Component {
         console.log('Received welcome from all participants');
       }
     });
-
 
     this.socket.on('message', (msg) => {
       console.log('New message received:');
@@ -106,22 +100,18 @@ class Chat extends Component {
       console.log(`sender: ${msg.sender}`);
     });
 
-
     this.socket.on('disconnect', () => {
       console.log('socket.io disconnected');
     });
-
 
     this.socket.on('reconnect', () => {
       console.log('socket.io reconnected');
     });
 
-
     this.socket.on('error', (error) => {
       console.error(error);
     });
   }
-
 
   onMessageSubmit(e) {
     e.preventDefault();
@@ -144,7 +134,6 @@ class Chat extends Component {
     return true;
   }
 
-
   pushMessage(sender, message) {
     const isOwnMessage = sender === this.state.curr_user.id;
     const newMessage = new Message({
@@ -157,27 +146,29 @@ class Chat extends Component {
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
-
   render() {
     const customBubble = props => (
       <div>
-        <p>{`${props.message.senderName} ${props.message.id ? 'says' : 'said'}: ${
-          props.message.message
-        }`}
+        <p>
+          {`${props.message.senderName} ${
+            props.message.id ? 'says' : 'said'
+          }: ${props.message.message}`}
         </p>
       </div>
     );
+
+    const memberRequest = props => <div />;
 
     // TODO: fix this card column ui & possibly separate out into separate Component
 
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
-        <Col xs={8} xsOffset={2}>
+        <Col xs={2}>
           <Card className="container">
-            {this.state.users.map(u => (
-              <div>{u.displayName}</div>
-            ))}
+            {this.state.users.map(u => <div>{u.displayName}</div>)}
           </Card>
+        </Col>
+        <Col xs={8}>
           <Card className="container">
             <div className="chatfeed-wrapper">
               <ChatFeed

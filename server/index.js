@@ -94,9 +94,6 @@ io.on('connection', (socket) => {
     socket.emit('identity', signed_identity);
   });
 
-  // TODO: on ('room_request')
-  // io.to(message.room)
-  // request to join room & receive confirmations before letting socket join
   socket.on('room_request', (req) => {
     io.to(req.room).emit('room_request', req.body);
 
@@ -112,15 +109,17 @@ io.on('connection', (socket) => {
       if (accepted.length === room_users.length) {
         socket.emit('request_accepted');
         socket.join(req.room);
-        console
-          .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
+        console.log(`${req.body.identity.displayName} has been accepted to room ${
+          req.room
+        }`);
       }
     } else {
       // automatically accept request and create room if nonexistent
       socket.emit('request_accepted');
       socket.join(req.room);
-      console
-        .log(`${req.body.identity.displayName} has been accepted to room ${req.room}`);
+      console.log(`${req.body.identity.displayName} has been accepted to room ${
+        req.room
+      }`);
     }
   });
 
