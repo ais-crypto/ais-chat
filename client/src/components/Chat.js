@@ -183,7 +183,7 @@ class Chat extends Component {
                   onClick={() => {
                     // TODO: SIGN THE ACCEPTANCE BOOLEAN
                     const acceptance = {
-                      status: true,
+                      room: this.props.match.params.chatname,
                       signature: 'INSERT SIGNATURE HERE',
                     };
                     this.socket.emit('accept_request', acceptance);
