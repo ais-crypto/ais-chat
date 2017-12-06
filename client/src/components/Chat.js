@@ -45,14 +45,17 @@ class Chat extends Component {
       this.setState({ currUser: signed_identity });
 
       this.socket.emit('room_request', {
-        room: this.props.match.params.chatname,
         body: {
-          identity: this.state.currUser,
-          signature: 'SIGNED WITH USER SIGNING KEY',
+          room: this.props.match.params.chatname,
+          active: true,
+          user: this.state.currUser,
         },
+        signature: 'SIGNED WITH USER SIGNING KEY',
       });
+    });
 
-      this.socket.on('request_accepted', () => {
+    this.socket.on('request_reply', (isAccepted) => {
+      if (isAccepted) {
         this.socket.emit('hello', {
           room: this.props.match.params.chatname,
           identity: this.state.currUser,
@@ -60,25 +63,32 @@ class Chat extends Component {
         this.setState({
           joined: true,
         });
-      });
+      } else {
+        console.log('Request denied');
+        alert('Your request to join this room was not approved.');
+        this.props.history.push('/');
+      }
     });
 
-    this.socket.on('room_request', (signed_id) => {
-      // TODO: verify id with signature
-
-      this.setState({
-        userRequests: this.state.userRequests.set(
-          signed_id.identity.socketId,
-          signed_id.identity,
-        ),
-      });
+    this.socket.on('room_request', (request) => {
+      if (request.body.active) {
+        this.setState({
+          userRequests: this.state.userRequests.set(
+            request.body.user.socketId,
+            request.body.user,
+          ),
+        });
+      } else {
+        this.setState({
+          userRequests: this.state.userRequests.delete(request.body.user.socketId),
+        });
+      }
     });
 
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.socketId}`);
 
       this.setState({
-        userRequests: this.state.userRequests.delete(user.identity.socketId),
         users: this.state.users.set(user.identity.socketId, user.identity),
       });
 
@@ -163,6 +173,19 @@ class Chat extends Component {
     this.setState({ messages: [...this.state.messages, newMessage] });
   }
 
+  replyToRoomRequest(user, response) {
+    // TODO: SIGN THE ACCEPTANCE BOOLEAN
+    const reply = {
+      body: {
+        isAccepted: response,
+        room: this.props.match.params.chatname,
+        user,
+      },
+      signature: 'INSERT SIGNATURE HERE',
+    };
+    this.socket.emit('request_reply', reply);
+  }
+
   render() {
     const customBubble = props => (
       <div>
@@ -189,16 +212,11 @@ class Chat extends Component {
                 <div>{u.displayName}</div>
                 <RaisedButton
                   label="Accept"
-                  onClick={() => {
-                    // TODO: SIGN THE ACCEPTANCE BOOLEAN
-                    const acceptance = {
-                      room: this.props.match.params.chatname,
-                      socketId: u.socketId,
-                      displayName: u.displayName,
-                      signature: 'INSERT SIGNATURE TO SOCKETID HERE',
-                    };
-                    this.socket.emit('accept_request', acceptance);
-                  }}
+                  onClick={() => this.replyToRoomRequest(u, true)}
+                />
+                <RaisedButton
+                  label="Decline"
+                  onClick={() => this.replyToRoomRequest(u, false)}
                 />
               </div>
             ))}
@@ -234,6 +252,9 @@ class Chat extends Component {
 }
 
 Chat.propTypes = {
+  history: PropTypes.shape({
+    push: PropTypes.func.isRequired,
+  }).isRequired,
   match: PropTypes.shape({
     params: PropTypes.shape({
       chatname: PropTypes.string.isRequired,

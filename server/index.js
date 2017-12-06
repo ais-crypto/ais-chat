@@ -98,25 +98,42 @@ io.on('connection', (socket) => {
   });
 
   socket.on('room_request', (req) => {
-    io.to(req.room).emit('room_request', req.body);
-
-    if (!io.sockets.adapter.rooms[req.room]) {
-      socket.emit('request_accepted');
-      socket.join(req.room);
-      console.log(`${req.body.identity.displayName} has been accepted to room ${
-        req.room
+    if (!io.sockets.adapter.rooms[req.body.room]) {
+      // Automatically accept if it's a new room
+      socket.emit('request_reply', true);
+      socket.join(req.body.room);
+      console.log(`${req.body.user.displayName} has been accepted to room ${
+        req.body.room
       }`);
+    } else {
+      io.to(req.body.room).emit('room_request', req);
     }
   });
 
-  socket.on('accept_request', (accept) => {
-    console.log('accepted');
+  socket.on('request_reply', (reply) => {
+    console.log(reply.body.isAccepted);
+
     // TODO: also VERIFY sender's SIGNATURE
-    if (io.sockets.adapter.rooms[accept.room]) {
-      io.to(accept.socketId).emit('request_accepted');
-      const accepted_socket = io.sockets.connected[accept.socketId];
-      accepted_socket.join(accept.room);
-      console.log(`${accept.displayName} has been accepted to ${accept.room}`);
+    console.log(reply);
+    io.to(reply.body.room).emit('room_request', {
+      body: {
+        room: reply.body.room,
+        active: false,
+        user: reply.body.user,
+      },
+      signature: 'SIGNED WITH USER SIGNING KEY',
+    });
+
+    io
+      .to(reply.body.user.socketId)
+      .emit('request_reply', reply.body.isAccepted);
+
+    if (reply.body.isAccepted) {
+      const accepted_socket = io.sockets.connected[reply.body.user.socketId];
+      accepted_socket.join(reply.body.room);
+      console.log(`${reply.body.user.displayName} has been accepted to ${
+        reply.body.room
+      }`);
     }
   });
 
