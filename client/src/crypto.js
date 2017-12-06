@@ -1,3 +1,4 @@
+import axios from 'axios';
 /* import * as utils from './utils';
 import * as primitives from './crypto-primitives';
 
@@ -10,6 +11,14 @@ if (!primitives.isWebCryptoAPISupported) {
 const enc = new TextEncoder('utf-8');
 const dec = new TextDecoder('utf-8');
 
+export function getCurrTime() {
+  axios
+    .get('/api/time')
+    .then((res) => {
+      console.log(res.data.currTime);
+    })
+    .catch(err => console.log(err));
+}
 
 // returns keyPair object
 export function generateSignatureKeyPair() {
@@ -79,14 +88,16 @@ export function encrypt(publicKey, message) {
 
 // returns an ArrayBuffer containing the encrypted data
 export function decrypt(privateKey, message) {
-  return window.crypto.subtle.decrypt(
-    {
-      name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
-    },
-    privateKey,
-    message,
-  ).then(data => dec.decode(data));
+  return window.crypto.subtle
+    .decrypt(
+      {
+        name: 'RSA-OAEP',
+        // label: Uint8Array([...]) //optional
+      },
+      privateKey,
+      message,
+    )
+    .then(data => dec.decode(data));
 }
 
 /*
