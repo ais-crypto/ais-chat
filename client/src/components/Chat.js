@@ -14,9 +14,10 @@ class Chat extends Component {
     this.state = {
       text: '',
       messages: [],
+      joined: false,
       useCustomBubble: false,
       users: Immutable.Map(),
-      user_requests: Immutable.Map(),
+      userRequests: Immutable.Map(),
     };
 
     this.socket = io.connect();
@@ -24,18 +25,14 @@ class Chat extends Component {
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
-      this.socket.emit(
-        'request_identity',
-        {
-          verificationKey: 'VERIFICATION KEY AS OBJECT HERE',
-          encryptionKey: 'USER PUBLIC ENCRYPTION KEY AS OBJECT HERE',
-        },
-      );
+      this.socket.emit('request_identity', {
+        verificationKey: 'VERIFICATION KEY AS OBJECT HERE',
+        encryptionKey: 'USER PUBLIC ENCRYPTION KEY AS OBJECT HERE',
+      });
     });
 
     // TODO: emit identity with public key (both signing and encryption keys?)
     // (w/out signature? extra state object?)
-
 
     // TODO: Don't allow any message submissions until identity is stablished
     this.socket.on('identity', (signed_identity) => {
@@ -45,12 +42,12 @@ class Chat extends Component {
       // TODO: verify identity
 
       // TODO: put into if-statement (when server identity is verified)
-      this.setState({ curr_user: signed_identity });
+      this.setState({ currUser: signed_identity });
 
       this.socket.emit('room_request', {
         room: this.props.match.params.chatname,
         body: {
-          identity: this.state.curr_user,
+          identity: this.state.currUser,
           signature: 'SIGNED WITH USER SIGNING KEY',
         },
       });
@@ -58,7 +55,10 @@ class Chat extends Component {
       this.socket.on('request_accepted', () => {
         this.socket.emit('hello', {
           room: this.props.match.params.chatname,
-          identity: this.state.curr_user,
+          identity: this.state.currUser,
+        });
+        this.setState({
+          joined: true,
         });
       });
     });
@@ -67,7 +67,7 @@ class Chat extends Component {
       // TODO: verify id with signature
 
       this.setState({
-        user_requests: this.state.user_requests.set(
+        userRequests: this.state.userRequests.set(
           signed_id.identity.id,
           signed_id.identity,
         ),
@@ -78,14 +78,14 @@ class Chat extends Component {
       console.log(`User joined room: ${user.identity.id}`);
 
       this.setState({
-        user_requests: this.state.user_requests.delete(user.identity.id),
+        userRequests: this.state.userRequests.delete(user.identity.id),
         users: this.state.users.set(user.identity.id, user.identity),
       });
 
       this.socket.emit('welcome', {
         room: this.props.match.params.chatname,
         to_socket: user.socket,
-        identity: this.state.curr_user,
+        identity: this.state.currUser,
       });
     });
 
@@ -103,9 +103,7 @@ class Chat extends Component {
       console.log('New message received:');
       console.log(msg);
 
-
       // TODO: verify signature of message (only push IF verified)
-
 
       // TODO: decrypt message
 
@@ -115,7 +113,7 @@ class Chat extends Component {
 
       this.pushMessage(msg.sender, msg.text);
 
-      console.log(`curr_user: ${this.state.curr_user.id}`);
+      console.log(`currUser: ${this.state.currUser.id}`);
       console.log(`sender: ${msg.sender}`);
     });
 
@@ -142,9 +140,9 @@ class Chat extends Component {
 
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
-      group_keys: { id: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
+      group_keys: { userId: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
       body: {
-        sender: this.state.curr_user.id,
+        sender: this.state.currUser.id,
         signature: 'SIGNATURE HERE',
         text: this.state.text,
       },
@@ -154,12 +152,12 @@ class Chat extends Component {
   }
 
   pushMessage(sender, message) {
-    const isOwnMessage = sender === this.state.curr_user.id;
+    const isOwnMessage = sender === this.state.currUser.id;
     const newMessage = new Message({
       id: isOwnMessage ? 0 : sender,
       message,
       senderName: isOwnMessage
-        ? this.state.curr_user.displayName
+        ? this.state.currUser.displayName
         : this.state.users.get(sender).displayName,
     });
     this.setState({ messages: [...this.state.messages, newMessage] });
@@ -186,7 +184,7 @@ class Chat extends Component {
             {this.state.users.map(u => <div>{u.displayName}</div>)}
           </Card>
           <Card className="container">
-            {this.state.user_requests.map(u => (
+            {this.state.userRequests.map(u => (
               <div>
                 <div>{u.displayName}</div>
                 <RaisedButton
@@ -218,6 +216,7 @@ class Chat extends Component {
 
               <form onSubmit={e => this.onMessageSubmit(e)}>
                 <TextField
+                  disabled={!this.state.joined}
                   value={this.state.text}
                   onChange={(e) => {
                     this.setState({ text: e.target.value });
