@@ -12,7 +12,7 @@ import { TextEncoder, TextDecoder } from 'text-encoding';
 const enc = new TextEncoder('utf-8');
 const dec = new TextDecoder('utf-8');
 
-export function getCurrTime() {
+function getCurrTime() {
   axios
     .get('/api/time')
     .then((res) => {
