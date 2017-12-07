@@ -1,3 +1,4 @@
+import axios from 'axios';
 /* import * as utils from './utils';
 import * as primitives from './crypto-primitives';
 
@@ -10,6 +11,15 @@ import { TextEncoder, TextDecoder } from 'text-encoding';
 
 const enc = new TextEncoder('utf-8');
 const dec = new TextDecoder('utf-8');
+
+export function getCurrTime() {
+  axios
+    .get('/api/time')
+    .then((res) => {
+      console.log(res.data.currTime);
+    })
+    .catch(err => console.log(err));
+}
 
 // returns keyPair object
 // RSA PSS recommended over RSA PKCS1v1_5
