@@ -50,11 +50,16 @@ class Chat extends Component {
           Promise.all([
             window.crypto.subtle.exportKey('jwk', keys.encryption.publicKey),
             window.crypto.subtle.exportKey('jwk', keys.signature.publicKey),
+            // TODO is it safe to export private keys? is there any way around this?
+            window.crypto.subtle.exportKey('pkcs8', keys.encryption.privateKey),
+            window.crypto.subtle.exportKey('pkcs8', keys.signature.privateKey),
           ]))
         .then((keys) => {
           this.socket.emit('request_identity', {
             encryption: keys[0],
             signature: keys[1],
+            decryption: keys[2],
+            signing: keys[3],
           });
         });
     });
@@ -193,14 +198,15 @@ class Chat extends Component {
     crypto
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
       .then((message) => {
+        return crypto.signMessageBody(this.state.currUser, message); //TODO add signature field beforehand?
+      })
+      .then((message) => {
         this.socket.emit('message', {
           room: this.props.match.params.chatname,
           body: message,
         });
         this.setState({ text: '' });
       });
-
-    // TODO: sign message & add to signature
 
     return true;
   }

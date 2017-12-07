@@ -9,6 +9,7 @@ export function getCurrTime() {
   axios
     .get('/api/time')
     .then((res) => {
+      console.log('current time');
       console.log(res.data.currTime);
     })
     .catch(err => console.log(err));
@@ -134,7 +135,6 @@ export function generateSymmetricKey() {
 export function symmetricEncrypt(key, message) {
   const data = enc.encode(message);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  console.log(iv);
   return window.crypto.subtle
     .encrypt(
       {
@@ -147,7 +147,6 @@ export function symmetricEncrypt(key, message) {
     .then((encrypted) => {
       console.log(`encrypted: ${message.body}`);
       console.log(`iv:${message.iv}`);
-      console.log(`message:${message}`);
       return { iv: Array.from(iv), body: encrypted };
     });
 }
@@ -156,8 +155,6 @@ export function symmetricEncrypt(key, message) {
 // returns string
 export function symmetricDecrypt(key, message) {
   const { iv, body } = message;
-  console.log(new Uint8Array(iv));
-  console.log(`in Decrypt: iv:${iv}, message body: ${body}`);
   return window.crypto.subtle
     .decrypt(
       {
@@ -169,6 +166,7 @@ export function symmetricDecrypt(key, message) {
     )
     .then((data) => {
       const decoded = dec.decode(data);
+      console.log("decrypted");
       console.log(decoded);
       return decoded;
     });
@@ -235,8 +233,18 @@ export function generateMessage(currUser, users, message) {
 
 export function processMessage(currUser, privKey, message) {
   const encKey = message.encryptedKeys[currUser.socketId];
+  let { sender, encryptedKeys, body, signature } = message;
+  const signed_message = {
+    sender,
+    encryptedKeys,
+    body,
+  };
+  const message_signature = signature;
+  console.log('signed message to verify');
+  console.log(signed_message);
   return asymmetricDecrypt(privKey, encKey)
     .then((groupKeyRaw) => {
+      console.log('groupkey raw');
       console.log(groupKeyRaw);
       return window.crypto.subtle.importKey(
         'raw',
@@ -252,18 +260,44 @@ export function processMessage(currUser, privKey, message) {
     .then(groupKey => symmetricDecrypt(groupKey, message.body));
 }
 
-/*
-export function processIncomingMessage(personalKeys, userID, signatureKey, msg) {
-  verify(keys.signatureKey, msg.body, msg.signature).then((verified) => {
-    if (verified) {
-      decrypt(dk, msg).then(msg => {
-        msg.key
-      });
-    } else {
-      throw new Error('Verification failed');
-    }
-  });
+export function importVerificationKey(key) {
+  return window.crypto.subtle.importKey(
+    "jwk",
+    key,
+    {
+        name: "RSA-PSS",
+        hash: {name: "SHA-256"},
+    },
+    true,
+    ["verify"],
+  );
 }
 
-processIncomingMessage(sdadasdas).then(...).catch(...)
-*/
+export function importSigningKey(key) {
+  return window.crypto.subtle.importKey(
+    "pkcs8",
+    key,
+    {
+        name: "RSA-PSS",
+        hash: {name: "SHA-256"},
+    },
+    true,
+    ["sign"],
+  );
+}
+
+export function signMessageBody(currUser, message) {
+  const rawKey = currUser.keys.signing;
+  return importSigningKey(rawKey)
+  .then((signKey) => {
+    // console.log('message signature');
+    // console.log(message.signature);
+    return createSignature(signKey, message);
+  })
+  .then((signature) => {
+    message.signature = signature;
+    // console.log('message post signing');
+    // console.log(message.signature);
+    return message;
+  });
+}
