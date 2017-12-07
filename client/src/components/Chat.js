@@ -15,6 +15,7 @@ import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
 
 import io from 'socket.io-client';
+import * as crypto from '../crypto';
 
 class Chat extends Component {
   constructor() {
@@ -33,7 +34,7 @@ class Chat extends Component {
 
     this.socket.on('connect', () => {
       console.log('socket.io connected');
-
+      crypto.signAndVerifyTest('AIS!');
       this.socket.emit('request_identity', {
         verificationKey: 'VERIFICATION KEY AS OBJECT HERE',
         encryptionKey: 'USER PUBLIC ENCRYPTION KEY AS OBJECT HERE',
