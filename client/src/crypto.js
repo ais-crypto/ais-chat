@@ -97,7 +97,7 @@ export function generateAsymmetricEncryptionKeyPair() {
 
 // returns an ArrayBuffer containing the encrypted data
 export function asymmetricEncrypt(publicKey, message) {
-  // const data = enc.encode(message);
+  // const data = enc.encode(message); //TODO
   return window.crypto.subtle.encrypt(
     {
       name: 'RSA-OAEP',
@@ -116,7 +116,7 @@ export function asymmetricDecrypt(privateKey, message) {
     privateKey,
     message,
   );
-  // .then(data => dec.decode(data));
+  // .then(data => dec.decode(data)); // TODO
 }
 
 export function asymmetricKeyTest(message) {
@@ -168,7 +168,7 @@ export function symmetricDecrypt(key, message) {
     .decrypt(
       {
         name: 'AES-GCM',
-        iv: new Uint8Array(iv), // The initialization vector you used to encrypt
+        iv: new Uint8Array(iv),
       },
       key,
       body,
@@ -220,8 +220,7 @@ function encryptGroupKey(users, rawKey) {
 }
 
 export function generateMessage(currUser, users, message) {
-  // const usersSeq = users.valueSeq(); TODO keep this one
-  const usersSeq = [currUser];
+  const usersSeq = users.valueSeq();
   console.log('usersSeq');
   console.log(usersSeq);
   let groupKey;
@@ -246,7 +245,7 @@ export function generateMessage(currUser, users, message) {
     });
 }
 
-export function verifyMessage(currUser, senderKey, message) {
+export function verifyMessage(senderKey, message) {
   const {
     sender, encryptedKeys, body, signature,
   } = message;
@@ -302,5 +301,13 @@ export function signMessageBody(currUser, message) {
     .then((signature) => {
       message.signature = signature;
       return message;
+    });
+}
+
+export function signAcceptanceBoolean(currUser, response) {
+  const rawKey = currUser.keys.signing;
+  return importSigningKey(rawKey)
+    .then((signKey) => {
+      return createSignature(signKey, response);
     });
 }

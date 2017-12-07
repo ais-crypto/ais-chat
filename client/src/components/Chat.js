@@ -35,7 +35,7 @@ class Chat extends Component {
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
-      this.keys = {}; // will store signature and encryption key pairs
+      this.keys = {};
       crypto
         .generateSignatureKeyPair()
         .then((key) => {
@@ -147,22 +147,19 @@ class Chat extends Component {
       console.log('New message received:');
       console.log(msg);
 
-      // TODO: verify signature of message (only push IF verified)
-
-      // TODO: decrypt message
-      // TODO uncomment below
-      // if (msg.sender === this.state.currUser.socketId) return;
-
+      if (msg.sender === this.state.currUser.socketId) return;
+      console.log('message sender');
+      console.log(msg.sender);
+      console.log(this.state.users);
       crypto
         .verifyMessage(
-          this.state.currUser,
-          this.state.currUser.keys.signature, // TODO should be msg.sender
+          this.state.users.get(msg.sender).keys.signature,
           msg,
         ).then((valid) => {
           if (!valid) {
             console.log('Verification failed');
           } else {
-            console.log('Verified successfully');
+            console.log('Verified signature');
             crypto.processMessage(
               this.state.currUser,
               this.keys.encryption.privateKey,
@@ -170,16 +167,11 @@ class Chat extends Component {
             )
               .then((text) => {
                 this.pushMessage(msg.sender, text);
-
                 console.log(`currUser: ${this.state.currUser.socketId}`);
                 console.log(`sender: ${msg.sender}`);
               });
           }
         });
-
-      // crypto.decrypt(this.state.users.get(msg.sender).encryptionKey).then((msg) => {
-
-      // });
     });
 
     this.socket.on('bye', (socket) => {
@@ -236,16 +228,18 @@ class Chat extends Component {
   }
 
   replyToRoomRequest(user, response) {
-    // TODO: SIGN THE ACCEPTANCE BOOLEAN
-    const reply = {
-      body: {
-        isAccepted: response,
-        room: this.props.match.params.chatname,
-        user,
-      },
-      signature: 'INSERT SIGNATURE HERE',
-    };
-    this.socket.emit('request_reply', reply);
+    crypto.signAcceptanceBoolean(this.state.currUser, response)
+      .then((signature) => {
+        const reply = {
+          body: {
+            isAccepted: response,
+            room: this.props.match.params.chatname,
+            user,
+          },
+          signature,
+        };
+        this.socket.emit('request_reply', reply);
+      });
   }
 
   render() {
