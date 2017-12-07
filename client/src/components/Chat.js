@@ -145,14 +145,22 @@ class Chat extends Component {
 
       // TODO: decrypt message
 
+      crypto
+        .processMessage(
+          this.state.currUser,
+          this.keys.encryption.privateKey,
+          msg,
+        )
+        .then((text) => {
+          this.pushMessage(msg.sender, text);
+
+          console.log(`currUser: ${this.state.currUser.socketId}`);
+          console.log(`sender: ${msg.sender}`);
+        });
+
       // crypto.decrypt(this.state.users.get(msg.sender).encryptionKey).then((msg) => {
 
       // });
-
-      this.pushMessage(msg.sender, msg.text);
-
-      console.log(`currUser: ${this.state.currUser.socketId}`);
-      console.log(`sender: ${msg.sender}`);
     });
 
     this.socket.on('bye', (socket) => {
@@ -179,23 +187,18 @@ class Chat extends Component {
     e.preventDefault();
     if (!this.state.text) return false;
 
-    crypto.generateMessage(
-      this.state.currUser,
-      this.state.users,
-      this.state.text,
-    ).then(message => {console.log(message)});
+    crypto
+      .generateMessage(this.state.currUser, this.state.users, this.state.text)
+      .then((message) => {
+        this.socket.emit('message', {
+          room: this.props.match.params.chatname,
+          body: message,
+        });
+        this.setState({ text: '' });
+      });
 
     // TODO: sign message & add to signature
-    this.socket.emit('message', {
-      room: this.props.match.params.chatname,
-      group_keys: { userId: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
-      body: {
-        sender: this.state.currUser.socketId,
-        signature: 'SIGNATURE HERE',
-        text: this.state.text,
-      },
-    });
-    this.setState({ text: '' });
+
     return true;
   }
 

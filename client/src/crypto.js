@@ -80,29 +80,28 @@ export function generateAsymmetricEncryptionKeyPair() {
 
 // returns an ArrayBuffer containing the encrypted data
 export function asymmetricEncrypt(publicKey, message) {
-  const data = enc.encode(message);
+  // const data = enc.encode(message);
   return window.crypto.subtle.encrypt(
     {
       name: 'RSA-OAEP',
       // label: Uint8Array([...]) //optional
     },
     publicKey,
-    data,
+    message,
   );
 }
 
 // returns decrypted message as string
 export function asymmetricDecrypt(privateKey, message) {
-  return window.crypto.subtle
-    .decrypt(
-      {
-        name: 'RSA-OAEP',
-        // label: Uint8Array([...]) //optional
-      },
-      privateKey,
-      message,
-    )
-    .then(data => dec.decode(data));
+  return window.crypto.subtle.decrypt(
+    {
+      name: 'RSA-OAEP',
+      // label: Uint8Array([...]) //optional
+    },
+    privateKey,
+    message,
+  );
+  // .then(data => dec.decode(data));
 }
 
 export function asymmetricKeyTest(message) {
@@ -132,7 +131,7 @@ export function generateSymmetricKey() {
 export function symmetricEncrypt(key, message) {
   const data = enc.encode(message);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  console.log(`iv:${iv}`);
+  console.log(iv);
   return window.crypto.subtle
     .encrypt(
       {
@@ -146,7 +145,7 @@ export function symmetricEncrypt(key, message) {
       console.log(`encrypted: ${message.body}`);
       console.log(`iv:${message.iv}`);
       console.log(`message:${message}`);
-      return { iv, body: encrypted };
+      return { iv: Array.from(iv), body: encrypted };
     });
 }
 
@@ -154,12 +153,13 @@ export function symmetricEncrypt(key, message) {
 // returns string
 export function symmetricDecrypt(key, message) {
   const { iv, body } = message;
+  console.log(new Uint8Array(iv));
   console.log(`in Decrypt: iv:${iv}, message body: ${body}`);
   return window.crypto.subtle
     .decrypt(
       {
         name: 'AES-GCM',
-        iv, // The initialization vector you used to encrypt
+        iv: new Uint8Array(iv), // The initialization vector you used to encrypt
       },
       key,
       body,
@@ -219,6 +219,25 @@ export function generateMessage(currUser, users, message) {
       });
     });
   });
+}
+
+export function processMessage(currUser, privKey, message) {
+  const encKey = message.encryptedKeys[currUser.socketId];
+  return asymmetricDecrypt(privKey, encKey)
+    .then((groupKeyRaw) => {
+      console.log(groupKeyRaw);
+      return window.crypto.subtle.importKey(
+        'raw',
+        groupKeyRaw,
+        {
+          name: 'AES-GCM',
+          length: 256,
+        },
+        true,
+        ['encrypt', 'decrypt'],
+      );
+    })
+    .then(groupKey => symmetricDecrypt(groupKey, message.body));
 }
 
 /*
