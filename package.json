@@ -6,7 +6,7 @@
     "body-parser": "^1.18.2",
     "connect-sqlite3": "^0.9.10",
     "cookie-parser": "^1.4.3",
-    "express": "4.13.3",
+    "express": "4.16.2",
     "express-session": "^1.15.6",
     "passport": "^0.4.0",
     "passport-google-oauth": "^1.0.0",
