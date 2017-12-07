@@ -101,13 +101,8 @@ export function asymmetricEncrypt(publicKey, message) {
   );
 }
 
-<<<<<<< HEAD
-// returns an ArrayBuffer containing the encrypted data
-export function decrypt(privateKey, message) {
-=======
 // returns decrypted message as string
 export function asymmetricDecrypt(privateKey, message) {
->>>>>>> 9488d3ff9e1e47f5b9f3363244ff505a068c85e4
   return window.crypto.subtle
     .decrypt(
       {
@@ -118,8 +113,6 @@ export function asymmetricDecrypt(privateKey, message) {
       message,
     )
     .then(data => dec.decode(data));
-<<<<<<< HEAD
-=======
 }
 
 export function asymmetricKeyTest(message) {
@@ -204,7 +197,6 @@ export function symmetricKeyTest(text) {
       });
     });
   });
->>>>>>> 9488d3ff9e1e47f5b9f3363244ff505a068c85e4
 }
 
 /*
