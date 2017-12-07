@@ -9,6 +9,7 @@ export function getCurrTime() {
   axios
     .get('/api/time')
     .then((res) => {
+      console.log('current time');
       console.log(res.data.currTime);
     })
     .catch(err => console.log(err));
@@ -57,6 +58,19 @@ export function verify(publicKey, message, signature) {
   );
 }
 
+export function importVerificationKey(key) {
+  return window.crypto.subtle.importKey(
+    'jwk',
+    key,
+    {
+      name: 'RSA-PSS',
+      hash: { name: 'SHA-256' },
+    },
+    true,
+    ['verify'],
+  );
+}
+
 export function signAndVerifyTest(message) {
   generateSignatureKeyPair().then((keyPair) => {
     createSignature(keyPair.privateKey, message).then((signature) => {
@@ -83,11 +97,10 @@ export function generateAsymmetricEncryptionKeyPair() {
 
 // returns an ArrayBuffer containing the encrypted data
 export function asymmetricEncrypt(publicKey, message) {
-  // const data = enc.encode(message);
+  // const data = enc.encode(message); //TODO
   return window.crypto.subtle.encrypt(
     {
       name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
     },
     publicKey,
     message,
@@ -99,12 +112,11 @@ export function asymmetricDecrypt(privateKey, message) {
   return window.crypto.subtle.decrypt(
     {
       name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
     },
     privateKey,
     message,
   );
-  // .then(data => dec.decode(data));
+  // .then(data => dec.decode(data)); // TODO
 }
 
 export function asymmetricKeyTest(message) {
@@ -134,7 +146,6 @@ export function generateSymmetricKey() {
 export function symmetricEncrypt(key, message) {
   const data = enc.encode(message);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  console.log(iv);
   return window.crypto.subtle
     .encrypt(
       {
@@ -145,9 +156,6 @@ export function symmetricEncrypt(key, message) {
       data,
     )
     .then((encrypted) => {
-      console.log(`encrypted: ${message.body}`);
-      console.log(`iv:${message.iv}`);
-      console.log(`message:${message}`);
       return { iv: Array.from(iv), body: encrypted };
     });
 }
@@ -156,19 +164,18 @@ export function symmetricEncrypt(key, message) {
 // returns string
 export function symmetricDecrypt(key, message) {
   const { iv, body } = message;
-  console.log(new Uint8Array(iv));
-  console.log(`in Decrypt: iv:${iv}, message body: ${body}`);
   return window.crypto.subtle
     .decrypt(
       {
         name: 'AES-GCM',
-        iv: new Uint8Array(iv), // The initialization vector you used to encrypt
+        iv: new Uint8Array(iv),
       },
       key,
       body,
     )
     .then((data) => {
       const decoded = dec.decode(data);
+      console.log('decrypted');
       console.log(decoded);
       return decoded;
     });
@@ -204,13 +211,18 @@ function importAsymmetricKey(key) {
 }
 
 function encryptGroupKey(users, rawKey) {
-  return Promise.all(users.map(user =>
-    importAsymmetricKey(user.keys.encryption).then(userKey =>
-      asymmetricEncrypt(userKey, rawKey))));
+  return Promise.all(users.map((user) => {
+    return importAsymmetricKey(user.keys.encryption)
+      .then((userKey) => {
+        return asymmetricEncrypt(userKey, rawKey);
+      });
+  }));
 }
 
 export function generateMessage(currUser, users, message) {
   const usersSeq = users.valueSeq();
+  console.log('usersSeq');
+  console.log(usersSeq);
   let groupKey;
   return generateSymmetricKey()
     .then((key) => {
@@ -233,11 +245,26 @@ export function generateMessage(currUser, users, message) {
     });
 }
 
+export function verifyMessage(senderKey, message) {
+  const {
+    sender, encryptedKeys, body, signature,
+  } = message;
+  const signed_message = {
+    sender,
+    encryptedKeys,
+    body,
+  };
+  const message_signature = signature;
+  return importVerificationKey(senderKey)
+    .then((publicKey) => {
+      return verify(publicKey, signed_message, message_signature);
+    });
+}
+
 export function processMessage(currUser, privKey, message) {
   const encKey = message.encryptedKeys[currUser.socketId];
   return asymmetricDecrypt(privKey, encKey)
     .then((groupKeyRaw) => {
-      console.log(groupKeyRaw);
       return window.crypto.subtle.importKey(
         'raw',
         groupKeyRaw,
@@ -252,18 +279,35 @@ export function processMessage(currUser, privKey, message) {
     .then(groupKey => symmetricDecrypt(groupKey, message.body));
 }
 
-/*
-export function processIncomingMessage(personalKeys, userID, signatureKey, msg) {
-  verify(keys.signatureKey, msg.body, msg.signature).then((verified) => {
-    if (verified) {
-      decrypt(dk, msg).then(msg => {
-        msg.key
-      });
-    } else {
-      throw new Error('Verification failed');
-    }
-  });
+export function importSigningKey(key) {
+  return window.crypto.subtle.importKey(
+    'pkcs8',
+    key,
+    {
+      name: 'RSA-PSS',
+      hash: { name: 'SHA-256' },
+    },
+    true,
+    ['sign'],
+  );
 }
 
-processIncomingMessage(sdadasdas).then(...).catch(...)
-*/
+export function signMessageBody(currUser, message) {
+  const rawKey = currUser.keys.signing;
+  return importSigningKey(rawKey)
+    .then((signKey) => {
+      return createSignature(signKey, message);
+    })
+    .then((signature) => {
+      message.signature = signature;
+      return message;
+    });
+}
+
+export function signAcceptanceBoolean(currUser, response) {
+  const rawKey = currUser.keys.signing;
+  return importSigningKey(rawKey)
+    .then((signKey) => {
+      return createSignature(signKey, response);
+    });
+}

@@ -35,7 +35,7 @@ class Chat extends Component {
     this.socket.on('connect', () => {
       console.log('socket.io connected');
 
-      this.keys = {}; // will store signature and encryption key pairs
+      this.keys = {};
       crypto
         .generateSignatureKeyPair()
         .then((key) => {
@@ -50,11 +50,16 @@ class Chat extends Component {
           Promise.all([
             window.crypto.subtle.exportKey('jwk', keys.encryption.publicKey),
             window.crypto.subtle.exportKey('jwk', keys.signature.publicKey),
+            // TODO is it safe to export private keys? is there any way around this?
+            window.crypto.subtle.exportKey('pkcs8', keys.encryption.privateKey),
+            window.crypto.subtle.exportKey('pkcs8', keys.signature.privateKey),
           ]))
         .then((keys) => {
           this.socket.emit('request_identity', {
             encryption: keys[0],
             signature: keys[1],
+            decryption: keys[2],
+            signing: keys[3],
           });
         });
     });
@@ -142,27 +147,31 @@ class Chat extends Component {
       console.log('New message received:');
       console.log(msg);
 
-      // TODO: verify signature of message (only push IF verified)
-
-      // TODO: decrypt message
       if (msg.sender === this.state.currUser.socketId) return;
-
+      console.log('message sender');
+      console.log(msg.sender);
+      console.log(this.state.users);
       crypto
-        .processMessage(
-          this.state.currUser,
-          this.keys.encryption.privateKey,
+        .verifyMessage(
+          this.state.users.get(msg.sender).keys.signature,
           msg,
-        )
-        .then((text) => {
-          this.pushMessage(msg.sender, text);
-
-          console.log(`currUser: ${this.state.currUser.socketId}`);
-          console.log(`sender: ${msg.sender}`);
+        ).then((valid) => {
+          if (!valid) {
+            console.log('Verification failed');
+          } else {
+            console.log('Verified signature');
+            crypto.processMessage(
+              this.state.currUser,
+              this.keys.encryption.privateKey,
+              msg,
+            )
+              .then((text) => {
+                this.pushMessage(msg.sender, text);
+                console.log(`currUser: ${this.state.currUser.socketId}`);
+                console.log(`sender: ${msg.sender}`);
+              });
+          }
         });
-
-      // crypto.decrypt(this.state.users.get(msg.sender).encryptionKey).then((msg) => {
-
-      // });
     });
 
     this.socket.on('bye', (socket) => {
@@ -190,8 +199,11 @@ class Chat extends Component {
     if (!this.state.text) return false;
     this.pushMessage(this.state.currUser.socketId, this.state.text);
 
-    crypto
+    crypto // TODO fails if this.state.users is empty
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
+      .then((message) => {
+        return crypto.signMessageBody(this.state.currUser, message);
+      })
       .then((message) => {
         this.socket.emit('message', {
           room: this.props.match.params.chatname,
@@ -199,8 +211,6 @@ class Chat extends Component {
         });
         this.setState({ text: '' });
       });
-
-    // TODO: sign message & add to signature
 
     return true;
   }
@@ -218,16 +228,18 @@ class Chat extends Component {
   }
 
   replyToRoomRequest(user, response) {
-    // TODO: SIGN THE ACCEPTANCE BOOLEAN
-    const reply = {
-      body: {
-        isAccepted: response,
-        room: this.props.match.params.chatname,
-        user,
-      },
-      signature: 'INSERT SIGNATURE HERE',
-    };
-    this.socket.emit('request_reply', reply);
+    crypto.signAcceptanceBoolean(this.state.currUser, response)
+      .then((signature) => {
+        const reply = {
+          body: {
+            isAccepted: response,
+            room: this.props.match.params.chatname,
+            user,
+          },
+          signature,
+        };
+        this.socket.emit('request_reply', reply);
+      });
   }
 
   render() {
