@@ -150,19 +150,31 @@ class Chat extends Component {
       // TODO: verify signature of message (only push IF verified)
 
       // TODO: decrypt message
-      if (msg.sender === this.state.currUser.socketId) return;
+      // TODO uncomment below
+      // if (msg.sender === this.state.currUser.socketId) return;
 
       crypto
-        .processMessage(
+        .verifyMessage(
           this.state.currUser,
-          this.keys.encryption.privateKey,
+          this.state.currUser.keys.signature, // TODO should be msg.sender
           msg,
-        )
-        .then((text) => {
-          this.pushMessage(msg.sender, text);
+        ).then((valid) => {
+          if (!valid) {
+            console.log('Verification failed');
+          } else {
+            console.log('Verified successfully');
+            crypto.processMessage(
+              this.state.currUser,
+              this.keys.encryption.privateKey,
+              msg,
+            )
+              .then((text) => {
+                this.pushMessage(msg.sender, text);
 
-          console.log(`currUser: ${this.state.currUser.socketId}`);
-          console.log(`sender: ${msg.sender}`);
+                console.log(`currUser: ${this.state.currUser.socketId}`);
+                console.log(`sender: ${msg.sender}`);
+              });
+          }
         });
 
       // crypto.decrypt(this.state.users.get(msg.sender).encryptionKey).then((msg) => {
@@ -195,10 +207,10 @@ class Chat extends Component {
     if (!this.state.text) return false;
     this.pushMessage(this.state.currUser.socketId, this.state.text);
 
-    crypto
+    crypto // TODO fails if this.state.users is empty
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
       .then((message) => {
-        return crypto.signMessageBody(this.state.currUser, message); //TODO add signature field beforehand?
+        return crypto.signMessageBody(this.state.currUser, message);
       })
       .then((message) => {
         this.socket.emit('message', {

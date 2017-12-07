@@ -58,6 +58,21 @@ export function verify(publicKey, message, signature) {
   );
 }
 
+export function importVerificationKey(key) {
+  console.log('rawkey?');
+  console.log(key);
+  return window.crypto.subtle.importKey(
+    'jwk',
+    key,
+    {
+      name: 'RSA-PSS',
+      hash: { name: 'SHA-256' },
+    },
+    true,
+    ['verify'],
+  );
+}
+
 export function signAndVerifyTest(message) {
   generateSignatureKeyPair().then((keyPair) => {
     createSignature(keyPair.privateKey, message).then((signature) => {
@@ -88,7 +103,6 @@ export function asymmetricEncrypt(publicKey, message) {
   return window.crypto.subtle.encrypt(
     {
       name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
     },
     publicKey,
     message,
@@ -100,7 +114,6 @@ export function asymmetricDecrypt(privateKey, message) {
   return window.crypto.subtle.decrypt(
     {
       name: 'RSA-OAEP',
-      // label: Uint8Array([...]) //optional
     },
     privateKey,
     message,
@@ -166,7 +179,7 @@ export function symmetricDecrypt(key, message) {
     )
     .then((data) => {
       const decoded = dec.decode(data);
-      console.log("decrypted");
+      console.log('decrypted');
       console.log(decoded);
       return decoded;
     });
@@ -202,13 +215,22 @@ function importAsymmetricKey(key) {
 }
 
 function encryptGroupKey(users, rawKey) {
-  return Promise.all(users.map(user =>
-    importAsymmetricKey(user.keys.encryption).then(userKey =>
-      asymmetricEncrypt(userKey, rawKey))));
+  console.log('encrypting group key');
+  console.log('users');
+  console.log(users);
+  return Promise.all(users.map((user) => {
+    return importAsymmetricKey(user.keys.encryption)
+      .then((userKey) => {
+        return asymmetricEncrypt(userKey, rawKey);
+      });
+  }));
 }
 
 export function generateMessage(currUser, users, message) {
-  const usersSeq = users.valueSeq();
+  // const usersSeq = users.valueSeq(); TODO keep this one
+  const usersSeq = [currUser];
+  console.log('usersSeq');
+  console.log(usersSeq);
   let groupKey;
   return generateSymmetricKey()
     .then((key) => {
@@ -231,21 +253,26 @@ export function generateMessage(currUser, users, message) {
     });
 }
 
-export function processMessage(currUser, privKey, message) {
-  const encKey = message.encryptedKeys[currUser.socketId];
-  let { sender, encryptedKeys, body, signature } = message;
+export function verifyMessage(currUser, senderKey, message) {
+  const {
+    sender, encryptedKeys, body, signature,
+  } = message;
   const signed_message = {
     sender,
     encryptedKeys,
     body,
   };
   const message_signature = signature;
-  console.log('signed message to verify');
-  console.log(signed_message);
+  return importVerificationKey(senderKey)
+    .then((publicKey) => {
+      return verify(publicKey, signed_message, message_signature);
+    });
+}
+
+export function processMessage(currUser, privKey, message) {
+  const encKey = message.encryptedKeys[currUser.socketId];
   return asymmetricDecrypt(privKey, encKey)
     .then((groupKeyRaw) => {
-      console.log('groupkey raw');
-      console.log(groupKeyRaw);
       return window.crypto.subtle.importKey(
         'raw',
         groupKeyRaw,
@@ -260,44 +287,27 @@ export function processMessage(currUser, privKey, message) {
     .then(groupKey => symmetricDecrypt(groupKey, message.body));
 }
 
-export function importVerificationKey(key) {
-  return window.crypto.subtle.importKey(
-    "jwk",
-    key,
-    {
-        name: "RSA-PSS",
-        hash: {name: "SHA-256"},
-    },
-    true,
-    ["verify"],
-  );
-}
-
 export function importSigningKey(key) {
   return window.crypto.subtle.importKey(
-    "pkcs8",
+    'pkcs8',
     key,
     {
-        name: "RSA-PSS",
-        hash: {name: "SHA-256"},
+      name: 'RSA-PSS',
+      hash: { name: 'SHA-256' },
     },
     true,
-    ["sign"],
+    ['sign'],
   );
 }
 
 export function signMessageBody(currUser, message) {
   const rawKey = currUser.keys.signing;
   return importSigningKey(rawKey)
-  .then((signKey) => {
-    // console.log('message signature');
-    // console.log(message.signature);
-    return createSignature(signKey, message);
-  })
-  .then((signature) => {
-    message.signature = signature;
-    // console.log('message post signing');
-    // console.log(message.signature);
-    return message;
-  });
+    .then((signKey) => {
+      return createSignature(signKey, message);
+    })
+    .then((signature) => {
+      message.signature = signature;
+      return message;
+    });
 }
