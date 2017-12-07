@@ -145,7 +145,7 @@ class Chat extends Component {
       // TODO: verify signature of message (only push IF verified)
 
       // TODO: decrypt message
-      if (msg.sender == this.state.currUser.socketId) return;
+      if (msg.sender === this.state.currUser.socketId) return;
 
       crypto
         .processMessage(
