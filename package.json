@@ -21,10 +21,8 @@
     "postinstall": "cd client && npm install",
     "start": "node build/index.js",
     "watch": "babel-watch server/index.js",
-    "dev":
-      "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
-    "build":
-      "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
+    "dev": "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
+    "build": "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
     "lint": "eslint ."
   },
   "devDependencies": {
