@@ -1,6 +1,9 @@
 {
   "name": "react-full-stack-starter-server",
   "version": "0.0.1",
+  "engines": {
+    "node": "7.8.0"
+  },
   "private": true,
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -17,8 +20,10 @@
     "postinstall": "cd client && npm install",
     "start": "node build/index.js",
     "watch": "babel-watch server/index.js",
-    "dev": "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
-    "build": "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
+    "dev":
+      "concurrently -c blue,yellow \"npm run watch\" \"cd client && npm start\"",
+    "build":
+      "concurrently \"babel server -d build\" \"cd client && npm test && npm run build\"",
     "lint": "eslint ."
   },
   "devDependencies": {
