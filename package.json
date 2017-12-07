@@ -2,7 +2,8 @@
   "name": "react-full-stack-starter-server",
   "version": "0.0.1",
   "engines": {
-    "node": "7.8.0"
+    "node": "7.8.x",
+    "npm": "5.5.x"
   },
   "private": true,
   "dependencies": {
