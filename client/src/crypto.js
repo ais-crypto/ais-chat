@@ -19,9 +19,9 @@ export function generateSignatureKeyPair() {
       name: 'RSA-PSS',
       modulusLength: 2048,
       publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-      hash: { name: 'SHA-384' },
+      hash: { name: 'SHA-256' },
     },
-    false,
+    true,
     ['sign', 'verify'],
   );
 }
@@ -71,9 +71,9 @@ export function generateAsymmetricEncryptionKeyPair() {
       name: 'RSA-OAEP',
       modulusLength: 2048,
       publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-      hash: { name: 'SHA-384' },
+      hash: { name: 'SHA-256' },
     },
-    false,
+    true,
     ['encrypt', 'decrypt'],
   );
 }
@@ -122,7 +122,7 @@ export function generateSymmetricKey() {
       name: 'AES-GCM',
       length: 256,
     },
-    false,
+    true,
     ['encrypt', 'decrypt'],
   );
 }
@@ -130,9 +130,8 @@ export function generateSymmetricKey() {
 // parameter string message
 // returns an ArrayBuffer containing the encrypted data
 export function symmetricEncrypt(key, message) {
-  const data = enc.encode(message.body);
+  const data = enc.encode(message);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
-  message.iv = iv;
   console.log(`iv:${iv}`);
   return window.crypto.subtle
     .encrypt(
@@ -144,11 +143,10 @@ export function symmetricEncrypt(key, message) {
       data,
     )
     .then((encrypted) => {
-      message.body = encrypted;
       console.log(`encrypted: ${message.body}`);
       console.log(`iv:${message.iv}`);
       console.log(`message:${message}`);
-      return message;
+      return { iv, body: encrypted };
     });
 }
 
@@ -184,6 +182,40 @@ export function symmetricKeyTest(text) {
       console.log(encrypted);
       symmetricDecrypt(key, encrypted).then((decrypted) => {
         console.log(decrypted);
+      });
+    });
+  });
+}
+
+export function generateMessage(currUser, users, message) {
+  const encryptedKeys = {};
+  return generateSymmetricKey().then((key) => {
+    return Promise.all(users.valueSeq().map(user =>
+      window.crypto.subtle
+        .importKey(
+          'jwk',
+          user.keys.encryption,
+          {
+            name: 'RSA-OAEP',
+            hash: { name: 'SHA-256' },
+          },
+          true,
+          ['encrypt'],
+        )
+        .then((userKey) => {
+          window.crypto.subtle.exportKey('raw', key).then((rawKey) => {
+            return asymmetricEncrypt(userKey, rawKey).then((encKey) => {
+              encryptedKeys[user.socketId] = encKey;
+            });
+          });
+        }))).then(() => {
+      console.log('encrypting');
+      return symmetricEncrypt(key, message).then((body) => {
+        return {
+          sender: currUser.socketId,
+          encryptedKeys,
+          body,
+        };
       });
     });
   });

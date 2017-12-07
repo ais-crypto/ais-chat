@@ -41,13 +41,20 @@ class Chat extends Component {
         .then((key) => {
           this.keys.signature = key;
         })
-        .then(() => {
-          crypto.generateAsymmetricEncryptionKeyPair().then((key) => {
-            this.keys.encryption = key;
-            this.socket.emit('request_identity', {
-              signature: this.keys.signature.publicKey,
-              encryption: this.keys.encryption.publicKey,
-            });
+        .then(() => crypto.generateAsymmetricEncryptionKeyPair())
+        .then((key) => {
+          this.keys.encryption = key;
+          return this.keys;
+        })
+        .then(keys =>
+          Promise.all([
+            window.crypto.subtle.exportKey('jwk', keys.encryption.publicKey),
+            window.crypto.subtle.exportKey('jwk', keys.signature.publicKey),
+          ]))
+        .then((keys) => {
+          this.socket.emit('request_identity', {
+            encryption: keys[0],
+            signature: keys[1],
           });
         });
     });
@@ -172,10 +179,13 @@ class Chat extends Component {
     e.preventDefault();
     if (!this.state.text) return false;
 
-    // TODO: generate new group key & make group_keys object for message
+    crypto.generateMessage(
+      this.state.currUser,
+      this.state.users,
+      this.state.text,
+    ).then(message => {console.log(message)});
 
     // TODO: sign message & add to signature
-
     this.socket.emit('message', {
       room: this.props.match.params.chatname,
       group_keys: { userId: 'GROUP KEY ENCRYPTED BY EACH PUBLIC KEY' },
