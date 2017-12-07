@@ -6,10 +6,10 @@ import {
   ListItem,
   Card,
   TextField,
-  RaisedButton,
   Avatar,
   Subheader,
   Divider,
+  IconButton,
 } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
 import Immutable from 'immutable';
@@ -152,19 +152,18 @@ class Chat extends Component {
       console.log(msg.sender);
       console.log(this.state.users);
       crypto
-        .verifyMessage(
-          this.state.users.get(msg.sender).keys.signature,
-          msg,
-        ).then((valid) => {
+        .verifyMessage(this.state.users.get(msg.sender).keys.signature, msg)
+        .then((valid) => {
           if (!valid) {
             console.log('Verification failed');
           } else {
             console.log('Verified signature');
-            crypto.processMessage(
-              this.state.currUser,
-              this.keys.encryption.privateKey,
-              msg,
-            )
+            crypto
+              .processMessage(
+                this.state.currUser,
+                this.keys.encryption.privateKey,
+                msg,
+              )
               .then((text) => {
                 this.pushMessage(msg.sender, text);
                 console.log(`currUser: ${this.state.currUser.socketId}`);
@@ -228,7 +227,8 @@ class Chat extends Component {
   }
 
   replyToRoomRequest(user, response) {
-    crypto.signAcceptanceBoolean(this.state.currUser, response)
+    crypto
+      .signAcceptanceBoolean(this.state.currUser, response)
       .then((signature) => {
         const reply = {
           body: {
@@ -269,16 +269,25 @@ class Chat extends Component {
           key={user.socketId}
           primaryText={user.displayName}
           leftAvatar={<Avatar src={user.photos[0].value} />}
-        >
-          <RaisedButton
-            label="Accept"
-            onClick={() => this.replyToRoomRequest(user, true)}
-          />
-          <RaisedButton
-            label="Decline"
-            onClick={() => this.replyToRoomRequest(user, false)}
-          />
-        </ListItem>
+          rightIconButton={
+            <div>
+              <IconButton
+                iconClassName="material-icons"
+                tooltip="Accept"
+                onClick={() => this.replyToRoomRequest(user, true)}
+              >
+                thumb_up
+              </IconButton>
+              <IconButton
+                iconClassName="material-icons"
+                tooltip="Decline"
+                onClick={() => this.replyToRoomRequest(user, false)}
+              >
+                thumb_down
+              </IconButton>
+            </div>
+          }
+        />
       );
     });
 
