@@ -59,8 +59,6 @@ export function verify(publicKey, message, signature) {
 }
 
 export function importVerificationKey(key) {
-  console.log('rawkey?');
-  console.log(key);
   return window.crypto.subtle.importKey(
     'jwk',
     key,
@@ -158,8 +156,6 @@ export function symmetricEncrypt(key, message) {
       data,
     )
     .then((encrypted) => {
-      console.log(`encrypted: ${message.body}`);
-      console.log(`iv:${message.iv}`);
       return { iv: Array.from(iv), body: encrypted };
     });
 }
@@ -215,9 +211,6 @@ function importAsymmetricKey(key) {
 }
 
 function encryptGroupKey(users, rawKey) {
-  console.log('encrypting group key');
-  console.log('users');
-  console.log(users);
   return Promise.all(users.map((user) => {
     return importAsymmetricKey(user.keys.encryption)
       .then((userKey) => {
