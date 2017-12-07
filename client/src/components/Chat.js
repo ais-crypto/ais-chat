@@ -115,6 +115,7 @@ class Chat extends Component {
 
     this.socket.on('hello', (user) => {
       console.log(`User joined room: ${user.identity.socketId}`);
+      console.log(user);
 
       this.setState({
         users: this.state.users.set(user.identity.socketId, user.identity),
@@ -144,6 +145,7 @@ class Chat extends Component {
       // TODO: verify signature of message (only push IF verified)
 
       // TODO: decrypt message
+      if (msg.sender == this.state.currUser.socketId) return;
 
       crypto
         .processMessage(
@@ -186,6 +188,7 @@ class Chat extends Component {
   onMessageSubmit(e) {
     e.preventDefault();
     if (!this.state.text) return false;
+    this.pushMessage(this.state.currUser.socketId, this.state.text);
 
     crypto
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
