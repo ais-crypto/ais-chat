@@ -1,12 +1,5 @@
 import axios from 'axios';
-/* import * as utils from './utils';
-import * as primitives from './crypto-primitives';
 
-if (!primitives.isWebCryptoAPISupported) {
-  console.log('WebCryptoAPI is not supported');
-}
-*/
-// generateUserKeyPair.((key) => {this.key = key})
 import { TextEncoder, TextDecoder } from 'text-encoding';
 
 const enc = new TextEncoder('utf-8');
@@ -197,38 +190,47 @@ export function symmetricKeyTest(text) {
   });
 }
 
+function importAsymmetricKey(key) {
+  return window.crypto.subtle.importKey(
+    'jwk',
+    key,
+    {
+      name: 'RSA-OAEP',
+      hash: { name: 'SHA-256' },
+    },
+    true,
+    ['encrypt'],
+  );
+}
+
+function encryptGroupKey(users, rawKey) {
+  return Promise.all(users.map(user =>
+    importAsymmetricKey(user.keys.encryption).then(userKey =>
+      asymmetricEncrypt(userKey, rawKey))));
+}
+
 export function generateMessage(currUser, users, message) {
-  const encryptedKeys = {};
-  return generateSymmetricKey().then((key) => {
-    return Promise.all(users.valueSeq().map(user =>
-      window.crypto.subtle
-        .importKey(
-          'jwk',
-          user.keys.encryption,
-          {
-            name: 'RSA-OAEP',
-            hash: { name: 'SHA-256' },
-          },
-          true,
-          ['encrypt'],
-        )
-        .then((userKey) => {
-          window.crypto.subtle.exportKey('raw', key).then((rawKey) => {
-            return asymmetricEncrypt(userKey, rawKey).then((encKey) => {
-              encryptedKeys[user.socketId] = encKey;
-            });
-          });
-        }))).then(() => {
-      console.log('encrypting');
-      return symmetricEncrypt(key, message).then((body) => {
+  const usersSeq = users.valueSeq();
+  let groupKey;
+  return generateSymmetricKey()
+    .then((key) => {
+      groupKey = key;
+      return window.crypto.subtle.exportKey('raw', groupKey);
+    })
+    .then(rawKey => encryptGroupKey(usersSeq, rawKey))
+    .then((encryptedKeys) => {
+      return symmetricEncrypt(groupKey, message).then((body) => {
+        const userToKey = {};
+        usersSeq.forEach((user, i) => {
+          userToKey[user.socketId] = encryptedKeys[i];
+        });
         return {
           sender: currUser.socketId,
-          encryptedKeys,
+          encryptedKeys: userToKey,
           body,
         };
       });
     });
-  });
 }
 
 export function processMessage(currUser, privKey, message) {
