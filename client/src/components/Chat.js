@@ -50,7 +50,6 @@ class Chat extends Component {
           Promise.all([
             window.crypto.subtle.exportKey('jwk', keys.encryption.publicKey),
             window.crypto.subtle.exportKey('jwk', keys.signature.publicKey),
-            // TODO is it safe to export private keys? is there any way around this?
             window.crypto.subtle.exportKey('pkcs8', keys.encryption.privateKey),
             window.crypto.subtle.exportKey('pkcs8', keys.signature.privateKey),
           ]))
@@ -198,7 +197,7 @@ class Chat extends Component {
     if (!this.state.text) return false;
     this.pushMessage(this.state.currUser.socketId, this.state.text);
 
-    crypto // TODO fails if this.state.users is empty
+    crypto 
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
       .then((message) => {
         return crypto.signMessageBody(this.state.currUser, message);
