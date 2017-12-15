@@ -151,24 +151,15 @@ class Chat extends Component {
       console.log(msg.sender);
       console.log(this.state.users);
       crypto
-        .verifyMessage(this.state.users.get(msg.sender).keys.signature, msg)
-        .then((valid) => {
-          if (!valid) {
-            console.log('Verification failed');
-          } else {
-            console.log('Verified signature');
-            crypto
-              .processMessage(
-                this.state.currUser,
-                this.keys.encryption.privateKey,
-                msg,
-              )
-              .then((text) => {
-                this.pushMessage(msg.sender, text);
-                console.log(`currUser: ${this.state.currUser.socketId}`);
-                console.log(`sender: ${msg.sender}`);
-              });
-          }
+        .processMessage(
+          this.state.currUser,
+          this.keys.encryption.privateKey,
+          msg,
+        )
+        .then((text) => {
+          this.pushMessage(msg.sender, text);
+          console.log(`currUser: ${this.state.currUser.socketId}`);
+          console.log(`sender: ${msg.sender}`);
         });
     });
 
@@ -199,9 +190,9 @@ class Chat extends Component {
 
     crypto
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
-      .then((message) => {
-        return crypto.signMessageBody(this.state.currUser, message);
-      })
+      // .then((message) => {
+      //   return crypto.signMessageBody(this.state.currUser, message);
+      // })
       .then((message) => {
         this.socket.emit('message', {
           room: this.props.match.params.chatname,
@@ -226,19 +217,14 @@ class Chat extends Component {
   }
 
   replyToRoomRequest(user, response) {
-    crypto
-      .signAcceptanceBoolean(this.state.currUser, response)
-      .then((signature) => {
-        const reply = {
-          body: {
-            isAccepted: response,
-            room: this.props.match.params.chatname,
-            user,
-          },
-          signature,
-        };
-        this.socket.emit('request_reply', reply);
-      });
+    const reply = {
+      body: {
+        isAccepted: response,
+        room: this.props.match.params.chatname,
+        user,
+      },
+    };
+    this.socket.emit('request_reply', reply);
   }
 
   render() {
