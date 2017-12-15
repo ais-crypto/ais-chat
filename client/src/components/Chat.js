@@ -197,7 +197,7 @@ class Chat extends Component {
     if (!this.state.text) return false;
     this.pushMessage(this.state.currUser.socketId, this.state.text);
 
-    crypto 
+    crypto
       .generateMessage(this.state.currUser, this.state.users, this.state.text)
       .then((message) => {
         return crypto.signMessageBody(this.state.currUser, message);
@@ -292,7 +292,7 @@ class Chat extends Component {
 
     return (
       <Row middle="xs" style={{ height: window.innerHeight }}>
-        <Col xsOffset={1} xs={3}>
+        <Col smOffset={1} xs={12} sm={3}>
           <Card className="container">
             <List>
               <Subheader>Active users</Subheader>
@@ -305,7 +305,7 @@ class Chat extends Component {
             </List>
           </Card>
         </Col>
-        <Col xs={7}>
+        <Col xs={12} sm={7}>
           <Card className="container">
             <div className="chatfeed-wrapper">
               <ChatFeed
